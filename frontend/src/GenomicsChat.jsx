@@ -13,6 +13,7 @@ import { ttsService } from './lib/tts';
 import { ollamaService } from './lib/ollamaService';
 import { Response } from './components/ui/response';
 import { apiService } from './lib/apiService';
+import { Loader } from './components/ui/loader';
 
 export default function GenomicsChat({ chatId, chatName }) {
   const { t, i18n } = useTranslation();
@@ -510,7 +511,13 @@ export default function GenomicsChat({ chatId, chatName }) {
                         }`}
                     >
                       {message.type === 'bot' ? (
-                        <Response className="text-sm">{message.content}</Response>
+                        message.streaming && !message.content ? (
+                          <div className="py-2 px-1">
+                            <Loader size={24} className="text-slate-400" />
+                          </div>
+                        ) : (
+                          <Response className="text-sm">{message.content}</Response>
+                        )
                       ) : (
                         <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{message.content}</p>
                       )}

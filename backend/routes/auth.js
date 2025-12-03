@@ -74,4 +74,69 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// OTP Store (In-memory for demo purposes)
+const otpStore = new Map();
+
+// Send OTP
+router.post('/send-otp', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // Check if user exists
+        const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Generate OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Store OTP (expires in 5 minutes)
+        otpStore.set(email, {
+            code: otp,
+            expires: Date.now() + 5 * 60 * 1000
+        });
+
+        // In a real app, send email here. For demo, log to console.
+        console.log(`==================================================`);
+        console.log(`OTP for ${email}: ${otp}`);
+        console.log(`==================================================`);
+
+        // FOR DEMO ONLY: Return OTP in response so user can login easily
+        res.json({ message: 'OTP sent successfully', otp: otp });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Verify OTP
+router.post('/verify-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        const storedData = otpStore.get(email);
+
+        if (!storedData) {
+            return res.status(400).json({ message: 'OTP not requested or expired' });
+        }
+
+        if (Date.now() > storedData.expires) {
+            otpStore.delete(email);
+            return res.status(400).json({ message: 'OTP expired' });
+        }
+
+        if (storedData.code !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP' });
+        }
+
+        // OTP verified
+        otpStore.delete(email); // Optional: clear after use
+        res.json({ message: 'OTP verified successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 module.exports = router;

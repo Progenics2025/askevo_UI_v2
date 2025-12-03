@@ -51,11 +51,17 @@ export default function LoginPage({ onLogin }) {
     setOtpLoading(true);
     try {
       // Call API to send OTP
-      await apiService.sendOtp(email);
+      const response = await apiService.sendOtp(email);
       setOtpSent(true);
       setOtpVerified(false);
-      setOtp('');
-      toast.success('OTP sent to your email');
+
+      if (response.otp) {
+        setOtp(response.otp);
+        toast.success(`OTP sent! Your code is: ${response.otp}`);
+      } else {
+        setOtp('');
+        toast.success('OTP sent to your email');
+      }
     } catch (error) {
       console.error('Failed to send OTP:', error);
       toast.error(error.message || 'Failed to send OTP');
@@ -229,11 +235,10 @@ export default function LoginPage({ onLogin }) {
                         value={otp}
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         data-testid="login-otp-input"
-                        className={`h-12 border-2 flex-1 transition-colors ${
-                          otpVerified
+                        className={`h-12 border-2 flex-1 transition-colors ${otpVerified
                             ? 'border-green-500 focus:border-green-600 bg-green-50'
                             : 'border-slate-200 focus:border-cyan-500'
-                        }`}
+                          }`}
                         disabled={!otpSent || otpVerified}
                         maxLength="6"
                       />

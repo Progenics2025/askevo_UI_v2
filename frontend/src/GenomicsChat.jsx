@@ -10,6 +10,9 @@ import VoiceConversationModal from './VoiceConversationModal';
 import FileUploadModal from './FileUploadModal';
 import { useTranslation } from 'react-i18next';
 import { ttsService } from './lib/tts';
+import { ollamaService } from './lib/ollamaService';
+import { Response } from './components/ui/response';
+import { apiService } from './lib/apiService';
 
 export default function GenomicsChat({ chatId, chatName }) {
   const { t, i18n } = useTranslation();
@@ -30,20 +33,82 @@ export default function GenomicsChat({ chatId, chatName }) {
   const [editValue, setEditValue] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [ollamaConnected, setOllamaConnected] = useState(false);
-  const [modelName, setModelName] = useState('gemma2:2b');
+  const [modelName, setModelName] = useState('gemma3:4b');
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const scrollAreaRef = useRef(null);
   const textareaRef = useRef(null);
   const recognitionRef = useRef(null);
 
+  // Load messages when chat session changes
   useEffect(() => {
-    setMessages([
-      {
-        id: '1',
-        type: 'bot',
-        content: t('welcome') + "! " + t('inputPlaceholder'), // Simplified initial message for now
-        timestamp: new Date(),
-      },
-    ]);
+    const loadSessionMessages = async () => {
+      if (!chatId) return;
+
+      setIsLoadingMessages(true);
+      try {
+        const token = localStorage.getItem('token');
+
+        // If session ID starts with "default-", it's a local session
+        if (chatId.startsWith('default-')) {
+          setMessages([
+            {
+              id: '1',
+              type: 'bot',
+              content: t('welcome') + "! " + t('inputPlaceholder'),
+              timestamp: new Date(),
+            },
+          ]);
+        } else if (token) {
+          // Load from database
+          const sessionMessages = await apiService.getSessionMessages(chatId);
+
+          if (sessionMessages.length > 0) {
+            const formattedMessages = sessionMessages.map(msg => ({
+              id: msg.id.toString(), // Backend returns 'id', not 'message_id'
+              type: msg.sender_type === 'user' ? 'user' : 'bot', // Backend returns 'sender_type'
+              content: msg.message_text, // Backend returns 'message_text'
+              timestamp: new Date(msg.created_at),
+            }));
+            setMessages(formattedMessages);
+          } else {
+            // Empty session, show welcome
+            setMessages([
+              {
+                id: '1',
+                type: 'bot',
+                content: t('welcome') + "! " + t('inputPlaceholder'),
+                timestamp: new Date(),
+              },
+            ]);
+          }
+        } else {
+          // No token, show welcome
+          setMessages([
+            {
+              id: '1',
+              type: 'bot',
+              content: t('welcome') + "! " + t('inputPlaceholder'),
+              timestamp: new Date(),
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('Failed to load messages:', error);
+        // On error, show welcome message
+        setMessages([
+          {
+            id: '1',
+            type: 'bot',
+            content: t('welcome') + "! " + t('inputPlaceholder'),
+            timestamp: new Date(),
+          },
+        ]);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    };
+
+    loadSessionMessages();
   }, [chatId, t]);
 
   useEffect(() => {
@@ -110,7 +175,7 @@ export default function GenomicsChat({ chatId, chatName }) {
     }, 100);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim()) return;
 
     const userMessage = {
@@ -120,28 +185,147 @@ export default function GenomicsChat({ chatId, chatName }) {
       timestamp: new Date(),
     };
 
+    // Optimistic update - show message immediately
     setMessages((prev) => [...prev, userMessage]);
+    const userPrompt = inputValue;
     setInputValue('');
 
-    setTimeout(() => {
-      const botResponseText = `I understand you're asking about "${inputValue}". Based on genomic data analysis, here are some insights: This involves complex genetic patterns and sequencing data. Let me provide a detailed analysis of the genomic markers and their implications for clinical interpretation.`;
+    // Save user message to database (async, non-blocking)
+    const saveUserMessagePromise = (async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token && !chatId.startsWith('default-')) {
+          await apiService.saveMessage(chatId, 'user', userPrompt);
+        }
+      } catch (error) {
+        console.error('Failed to save user message:', error);
+      }
+    })();
 
-      const botMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'bot',
-        content: botResponseText,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botMessage]);
-      scrollToBottom();
+    // Create bot message placeholder for streaming
+    const botMessageId = (Date.now() + 1).toString();
+    const botMessage = {
+      id: botMessageId,
+      type: 'bot',
+      content: '',
+      timestamp: new Date(),
+      streaming: true
+    };
+
+    setMessages((prev) => [...prev, botMessage]);
+
+    try {
+      // OPTIMIZATION 1: Lazy Context Building (saves 500-1500ms when not needed)
+      // Only fetch genomics data if keywords are detected
+      let genomicsContext = '';
+      const hasGenomicsKeywords = /variant|mutation|SNP|gene|BRCA|TP53|disease|disorder|test|screening|diagnosis/i.test(userPrompt);
+
+      if (hasGenomicsKeywords) {
+        // This runs in background while we prepare the prompt
+        const genomicsDataPromise = (async () => {
+          try {
+            const { genomicsApiService } = await import('./lib/genomicsApiService');
+            return await genomicsApiService.buildContext(userPrompt);
+          } catch (error) {
+            console.warn('Genomics context failed, continuing without:', error);
+            return '';
+          }
+        })();
+
+        // Wait max 1 second for genomics data, then proceed anyway
+        genomicsContext = await Promise.race([
+          genomicsDataPromise,
+          new Promise(resolve => setTimeout(() => resolve(''), 1000))
+        ]);
+      }
+
+      // OPTIMIZATION 2: Build lightweight conversation context (last 5 messages only)
+      const contextMessages = messages
+        .slice(-5)  // Reduced from 10 for speed
+        .filter(msg => !msg.streaming && msg.content)
+        .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content.substring(0, 200)}`)  // Truncate long messages
+        .join('\n\n');
+
+      // Construct optimized prompt
+      let finalPrompt = userPrompt;
+      if (genomicsContext) {
+        finalPrompt = `[Genomics Data]: ${genomicsContext.substring(0, 500)}\n\n${userPrompt}`;
+      }
+      if (contextMessages) {
+        finalPrompt = `[Context]: ${contextMessages}\n\n${finalPrompt}`;
+      }
+
+      // Stream response from Ollama with optimized context
+      let fullResponse = '';
+
+      for await (const chunk of ollamaService.streamResponse(finalPrompt, [], null)) {
+        fullResponse += chunk;
+
+        // Update the bot message with streamed content
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, content: fullResponse, streaming: true }
+              : msg
+          )
+        );
+      }
+
+      // Mark streaming as complete
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === botMessageId
+            ? { ...msg, streaming: false }
+            : msg
+        )
+      );
+
+      // Save bot response to database (async, non-blocking)
+      (async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (token && !chatId.startsWith('default-')) {
+            await saveUserMessagePromise; // Wait for user message to be saved first
+            await apiService.saveMessage(chatId, 'assistant', fullResponse);
+          }
+        } catch (error) {
+          console.error('Failed to save bot response:', error);
+        }
+      })();
+
+      // Auto-generate session title from first message
+      if (messages.length <= 1 && !chatId.startsWith('default-')) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const title = userPrompt.substring(0, 50) + (userPrompt.length > 50 ? '...' : '');
+            await apiService.renameSession(chatId, title);
+          } catch (error) {
+            console.error('Failed to auto-title session:', error);
+          }
+        }
+      }
 
       // Auto-speak if enabled
-      if (localStorage.getItem('autoSpeak') === 'true') {
-        ttsService.speak(botResponseText, i18n.language);
+      if (localStorage.getItem('autoSpeak') === 'true' && fullResponse) {
+        ttsService.speak(fullResponse, i18n.language);
       }
-    }, 1000);
 
-    scrollToBottom();
+    } catch (error) {
+      console.error('Ollama error:', error);
+
+      // Update with error message
+      const errorMessage = 'Sorry, I encountered an error connecting to the AI model. Please check if Ollama is running.';
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === botMessageId
+            ? { ...msg, content: errorMessage, streaming: false, error: true }
+            : msg
+        )
+      );
+
+      toast.error('Failed to get AI response');
+    }
   };
 
   const handleSpeechToText = () => {
@@ -325,7 +509,11 @@ export default function GenomicsChat({ chatId, chatName }) {
                         : 'bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white'
                         }`}
                     >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{message.content}</p>
+                      {message.type === 'bot' ? (
+                        <Response className="text-sm">{message.content}</Response>
+                      ) : (
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{message.content}</p>
+                      )}
                     </div>
 
                     {/* Action Buttons */}

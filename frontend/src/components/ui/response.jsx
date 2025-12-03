@@ -1,4 +1,4 @@
-import ReactMarkdown from 'reaction-markdown';
+import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -96,17 +96,17 @@ export function Response({ children, className }) {
                     },
                     // Headings
                     h1({ children }) {
-                        return <h1 className="text-2xl font-bold mt-6 mb-3 text-slate-900 dark:text-slate-100">{children}</h1>;
+                        return <h1 className="text-2xl font-bold mt-6 mb-3 text-slate-900">{children}</h1>;
                     },
                     h2({ children }) {
-                        return <h2 className="text-xl font-bold mt-5 mb-2 text-slate-900 dark:text-slate-100">{children}</h2>;
+                        return <h2 className="text-xl font-bold mt-5 mb-2 text-slate-900">{children}</h2>;
                     },
                     h3({ children }) {
-                        return <h3 className="text-lg font-semibold mt-4 mb-2 text-slate-900 dark:text-slate-100">{children}</h3>;
+                        return <h3 className="text-lg font-semibold mt-4 mb-2 text-slate-900">{children}</h3>;
                     },
                     // Paragraphs
                     p({ children }) {
-                        return <p className="my-2 leading-relaxed text-slate-800 dark:text-slate-200">{children}</p>;
+                        return <p className="my-2 leading-relaxed text-slate-900">{children}</p>;
                     },
                 }}
             >

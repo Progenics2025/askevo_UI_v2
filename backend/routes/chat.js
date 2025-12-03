@@ -117,4 +117,46 @@ router.put('/messages/:messageId/feedback', auth, async (req, res) => {
     }
 });
 
+// Rename Session
+router.put('/sessions/:sessionId', auth, async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { session_title } = req.body;
+        const user_id = req.user.id;
+
+        // Verify ownership
+        const [session] = await pool.query('SELECT * FROM chat_sessions WHERE id = ? AND user_id = ?', [sessionId, user_id]);
+        if (session.length === 0) {
+            return res.status(404).json({ message: 'Session not found' });
+        }
+
+        await pool.query('UPDATE chat_sessions SET session_title = ? WHERE id = ?', [session_title, sessionId]);
+        res.json({ message: 'Session renamed successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Delete Session
+router.delete('/sessions/:sessionId', auth, async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const user_id = req.user.id;
+
+        // Verify ownership
+        const [session] = await pool.query('SELECT * FROM chat_sessions WHERE id = ? AND user_id = ?', [sessionId, user_id]);
+        if (session.length === 0) {
+            return res.status(404).json({ message: 'Session not found' });
+        }
+
+        // Delete session (CASCADE will handle messages)
+        await pool.query('DELETE FROM chat_sessions WHERE id = ?', [sessionId]);
+        res.json({ message: 'Session deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 module.exports = router;

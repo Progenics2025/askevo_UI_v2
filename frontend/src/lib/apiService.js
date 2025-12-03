@@ -38,7 +38,7 @@ class ApiService {
         const response = await fetch(`${this.getApiUrl()}/chat/sessions`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ session_name: sessionName })
+            body: JSON.stringify({ session_title: sessionName }) // Changed from session_name
         });
 
         if (!response.ok) {
@@ -58,7 +58,8 @@ class ApiService {
             throw new Error('Failed to fetch chat sessions');
         }
 
-        return response.json();
+        const data = await response.json();
+        return data.sessions || []; // Return sessions array
     }
 
     async getSessionMessages(sessionId) {
@@ -71,7 +72,8 @@ class ApiService {
             throw new Error('Failed to fetch messages');
         }
 
-        return response.json();
+        const data = await response.json();
+        return data.messages || []; // Return messages array
     }
 
     async saveMessage(sessionId, role, content) {
@@ -80,13 +82,41 @@ class ApiService {
             headers: this.getHeaders(),
             body: JSON.stringify({
                 session_id: sessionId,
-                role,
-                content
+                sender_type: role, // Changed from role to sender_type
+                message_text: content, // Changed from content to message_text
+                message_type: 'text'
             })
         });
 
         if (!response.ok) {
             throw new Error('Failed to save message');
+        }
+
+        return response.json();
+    }
+
+    async renameSession(sessionId, newName) {
+        const response = await fetch(`${this.getApiUrl()}/chat/sessions/${sessionId}`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ session_title: newName })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to rename session');
+        }
+
+        return response.json();
+    }
+
+    async deleteSession(sessionId) {
+        const response = await fetch(`${this.getApiUrl()}/chat/sessions/${sessionId}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete session');
         }
 
         return response.json();
@@ -142,6 +172,36 @@ class ApiService {
         const data = await response.json();
         this.setToken(data.token);
         return data;
+    }
+
+    async sendOtp(email) {
+        const response = await fetch(`${this.getApiUrl()}/auth/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to send OTP');
+        }
+
+        return response.json();
+    }
+
+    async verifyOtp(email, otp) {
+        const response = await fetch(`${this.getApiUrl()}/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'OTP verification failed');
+        }
+
+        return response.json();
     }
 }
 

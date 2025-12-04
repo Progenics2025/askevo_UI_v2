@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MessageSquarePlus, Dna, GitBranch, Trash2, LogOut, MoreVertical, Edit2, Settings } from 'lucide-react';
+import { MessageSquarePlus, Dna, GitBranch, Trash2, LogOut, MoreVertical, Edit2, Settings, PanelLeftClose } from 'lucide-react';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ export default function Sidebar({
   onRenameChat,
   user,
   onLogout,
+  onToggle,
 }) {
   const { t } = useTranslation();
   const [editingChat, setEditingChat] = useState(null);
@@ -47,17 +48,27 @@ export default function Sidebar({
 
   return (
     <>
-      <div className="w-80 bg-gradient-to-b from-white to-slate-50 border-r-2 border-cyan-100 flex flex-col shadow-lg" data-testid="sidebar-container">
+      <div className="w-80 h-full bg-gradient-to-b from-white to-slate-50 border-r-2 border-cyan-100 flex flex-col shadow-lg" data-testid="sidebar-container">
         {/* Header */}
         <div className="p-5 border-b-2 border-cyan-100">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-cyan-500 via-violet-500 to-fuchsia-500 rounded-2xl shadow-lg animate-pulse">
-              <Dna className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-cyan-500 via-violet-500 to-fuchsia-500 rounded-2xl shadow-lg animate-pulse">
+                <Dna className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <img src="/askevo-logo.png" alt="askEVO" className="h-8" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
+                <p className="text-xs text-slate-500 font-semibold">by Progenics</p>
+              </div>
             </div>
-            <div>
-              <img src="/askevo-logo.png" alt="askEVO" className="h-8" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
-              <p className="text-xs text-slate-500 font-semibold">by Progenics</p>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggle}
+              className="text-slate-400 hover:text-cyan-600 hover:bg-cyan-50"
+            >
+              <PanelLeftClose className="h-5 w-5" />
+            </Button>
           </div>
 
           <Button

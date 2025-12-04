@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { PanelLeft } from 'lucide-react'
 import Sidebar from './Sidebar'
 import GenomicsChat from './GenomicsChat'
 import PedigreeChart from './PedigreeChart'
@@ -9,6 +10,7 @@ export default function Dashboard({ user, onLogout }) {
   const [chatHistory, setChatHistory] = useState([])
   const [activeChat, setActiveChat] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   // Load chat sessions from database
   useEffect(() => {
@@ -136,21 +138,41 @@ export default function Dashboard({ user, onLogout }) {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50">
-      <Sidebar
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-        chatHistory={chatHistory}
-        activeChat={activeChat}
-        setActiveChat={setActiveChat}
-        onNewChat={handleNewChat}
-        onDeleteChat={handleDeleteChat}
-        onRenameChat={handleRenameChat}
-        user={user}
-        onLogout={onLogout}
-      />
+    <div className="flex h-screen bg-slate-50 relative overflow-hidden">
+      {/* Overlay Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+      >
+        <Sidebar
+          activeSection={activeSection}
+          setActiveSection={setActiveSection}
+          chatHistory={chatHistory}
+          activeChat={activeChat}
+          setActiveChat={setActiveChat}
+          onNewChat={handleNewChat}
+          onDeleteChat={handleDeleteChat}
+          onRenameChat={handleRenameChat}
+          user={user}
+          onLogout={onLogout}
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
+      </div>
 
-      <div className="flex-1 flex flex-col">
+      {/* Toggle Button (Visible when sidebar is closed) */}
+      <div className={`fixed left-4 top-4 z-40 transition-opacity duration-300 ${isSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="p-2 bg-white/80 backdrop-blur-md border border-cyan-200 rounded-lg shadow-md hover:bg-cyan-50 text-cyan-700 transition-all hover:scale-105"
+          title="Open Sidebar"
+        >
+          <PanelLeft className="h-6 w-6" />
+        </button>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col w-full h-full">
         {activeSection === 'genomics' ? (
           <GenomicsChat
             chatId={activeChat}

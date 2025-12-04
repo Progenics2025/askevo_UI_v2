@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,72 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Dna, Mail } from 'lucide-react';
 import { apiService } from './lib/apiService';
 
+// Interactive DNA Strand Component
+function InteractiveDnaStrand({ baseX, baseY, dnaIndex, mouseX, mouseY }) {
+  const [position, setPosition] = useState({ x: baseX, y: baseY });
+  const dnaRef = useRef(null);
+
+  useEffect(() => {
+    if (mouseX === null || mouseY === null) {
+      setPosition({ x: baseX, y: baseY });
+      return;
+    }
+
+    const dx = mouseX - baseX;
+    const dy = mouseY - baseY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Repel from mouse when too close
+    if (distance < 300) {
+      const angle = Math.atan2(dy, dx);
+      const repelDistance = Math.max(0, 300 - distance) * 0.3;
+      const newX = baseX - Math.cos(angle) * repelDistance;
+      const newY = baseY - Math.sin(angle) * repelDistance;
+      setPosition({ x: newX, y: newY });
+    } else {
+      setPosition({ x: baseX, y: baseY });
+    }
+  }, [mouseX, mouseY, baseX, baseY]);
+
+  const rotation = (dnaIndex * 45) % 360;
+  const colorMap = {
+    0: '#06B6D4', // cyan-400
+    1: '#A78BFA', // violet-400
+    2: '#EC4899', // fuchsia-400
+    3: '#3B82F6', // blue-400
+    4: '#A855F7', // purple-400
+    5: '#F472B6', // pink-400
+  };
+  const color = colorMap[dnaIndex % 6];
+  const size = 24 + (dnaIndex % 3) * 8;
+
+  return (
+    <div
+      ref={dnaRef}
+      className={`absolute transition-all duration-300 ease-out animate-float`}
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+        animationDelay: `${(dnaIndex * 0.3) % 4}s`,
+      }}
+    >
+      <Dna 
+        size={size}
+        color={color}
+        style={{
+          opacity: 0.6,
+          filter: 'drop-shadow(0 0 10px rgba(34, 211, 238, 0.4))',
+        }}
+      />
+    </div>
+  );
+}
+
 export default function LoginPage({ onLogin }) {
+  const [mouseX, setMouseX] = useState(null);
+  const [mouseY, setMouseY] = useState(null);
+  const containerRef = useRef(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,6 +92,45 @@ export default function LoginPage({ onLogin }) {
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+
+  // DNA strand positions for interactive effect
+  const dnaStrands = [
+    { baseX: 80, baseY: 80, index: 0 },
+    { baseX: window.innerWidth - 80, baseY: 80, index: 1 },
+    { baseX: window.innerWidth - 160, baseY: window.innerHeight / 2, index: 2 },
+    { baseX: 40, baseY: window.innerHeight / 3, index: 3 },
+    { baseX: window.innerWidth - 40, baseY: window.innerHeight / 4, index: 4 },
+    { baseX: window.innerWidth / 4, baseY: window.innerHeight - 40, index: 5 },
+    { baseX: window.innerWidth / 2, baseY: window.innerHeight - 128, index: 6 },
+    { baseX: window.innerWidth - 120, baseY: window.innerHeight / 2 + 80, index: 7 },
+    { baseX: window.innerWidth / 3, baseY: window.innerHeight / 3, index: 8 },
+    { baseX: window.innerWidth - 20, baseY: window.innerHeight / 3, index: 9 },
+  ];
+
+  // Handle mouse movement for interactive DNA
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMouseX(e.clientX);
+      setMouseY(e.clientY);
+    };
+
+    const handleMouseLeave = () => {
+      setMouseX(null);
+      setMouseY(null);
+    };
+
+    if (containerRef.current) {
+      containerRef.current.addEventListener('mousemove', handleMouseMove);
+      containerRef.current.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('mousemove', handleMouseMove);
+        containerRef.current.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, []);
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -151,40 +255,50 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden p-4">
+    <div 
+      ref={containerRef}
+      className="min-h-screen flex items-center justify-center relative overflow-hidden p-4"
+    >
       {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 via-violet-50 to-fuchsia-50"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"></div>
 
-      {/* Floating DNA Strands */}
-      <div className="absolute top-20 left-20 opacity-30 animate-float">
-        <Dna className="h-32 w-32 text-cyan-400" />
-      </div>
-      <div className="absolute bottom-20 right-20 opacity-30 animate-float" style={{ animationDelay: '1s' }}>
-        <Dna className="h-24 w-24 text-violet-400" />
-      </div>
-      <div className="absolute top-1/2 right-40 opacity-20 animate-float" style={{ animationDelay: '2s' }}>
-        <Dna className="h-40 w-40 text-fuchsia-400" />
-      </div>
+      {/* Interactive Floating DNA Strands */}
+      {dnaStrands.map((strand) => (
+        <InteractiveDnaStrand
+          key={strand.index}
+          baseX={strand.baseX}
+          baseY={strand.baseY}
+          dnaIndex={strand.index}
+          mouseX={mouseX}
+          mouseY={mouseY}
+        />
+      ))}
+
+      {/* Glow effect that follows mouse */}
+      {mouseX && mouseY && (
+        <div
+          className="absolute pointer-events-none rounded-full"
+          style={{
+            left: `${mouseX}px`,
+            top: `${mouseY}px`,
+            width: '150px',
+            height: '150px',
+            transform: 'translate(-50%, -50%)',
+            background: 'radial-gradient(circle, rgba(34, 211, 238, 0.15) 0%, rgba(34, 211, 238, 0) 70%)',
+            filter: 'blur(30px)',
+            zIndex: 5,
+          }}
+        />
+      )}
 
       <div className="w-full max-w-md relative z-10 animate-fade-in">
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-cyan-500 via-violet-500 to-fuchsia-500 rounded-3xl mb-6 shadow-2xl relative animate-pulse">
-            <div className="absolute inset-1 bg-white rounded-3xl flex items-center justify-center">
-              <Dna className="h-12 w-12 text-transparent bg-gradient-to-br from-cyan-500 to-violet-600" style={{ stroke: 'url(#gradient)' }} />
-            </div>
-            <svg width="0" height="0">
-              <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#06b6d4" />
-                  <stop offset="100%" stopColor="#8b5cf6" />
-                </linearGradient>
-              </defs>
-            </svg>
+          <div className="flex flex-col items-center justify-center gap-4 mb-6">
+            <img src="/askEVO_logo.png" alt="askEVO" className="h-40 w-auto" style={{ filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15))' }} />
           </div>
-          <img src="/askevo-logo.png" alt="askEVO" className="h-24 mb-3" style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }} />
           <div className="flex items-center justify-center gap-2 text-sm">
-            <span className="text-slate-600">Powered by</span>
-            <span className="font-bold text-transparent bg-gradient-to-r from-cyan-600 to-violet-600 bg-clip-text" data-testid="powered-by-progenics">Progenics</span>
+            <span className="text-slate-300">Powered by</span>
+            <span className="font-bold text-transparent bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text" data-testid="powered-by-progenics">Progenics</span>
           </div>
         </div>
 

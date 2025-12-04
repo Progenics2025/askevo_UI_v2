@@ -1,5 +1,5 @@
 // Ollama Service for streaming LLM responses
-const OLLAMA_DEFAULT_URL = 'http://localhost:11434';
+const OLLAMA_DEFAULT_URL = '/api/ollama';
 
 class OllamaService {
     constructor() {
@@ -7,7 +7,7 @@ class OllamaService {
     }
 
     getOllamaUrl() {
-        return localStorage.getItem('ollamaUrl') || `http://${window.location.hostname}:11434`;
+        return localStorage.getItem('ollamaUrl') || OLLAMA_DEFAULT_URL;
     }
 
     async generateStreamResponse(messages, signal = null) {

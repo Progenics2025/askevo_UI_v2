@@ -2,20 +2,9 @@ tunnel: ed3d4955-8036-4979-92f4-2c1ac33891c0
 credentials-file: /home/progenics-bioinfo/.cloudflared/ed3d4955-8036-4979-92f4-2c1ac33891c0.json
 
 ingress:
-  # Route API requests to backend
+  # Route all traffic to backend (which serves both API and frontend)
   - hostname: chat.progenicslabs.com
-    path: /api/*
     service: http://localhost:3001
-
-  # Route Ollama requests directly to Ollama server
-  # Rewrites /ollama/api/... to /api/...
-  - hostname: chat.progenicslabs.com
-    path: /ollama/*
-    service: http://localhost:11434
-
-  # Route all other requests to frontend (Dev Server)
-  - hostname: chat.progenicslabs.com
-    service: http://localhost:5174
 
   # Fallback
   - service: http_status:404

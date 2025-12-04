@@ -21,6 +21,17 @@ export default function NFCLogin() {
 
     const token = searchParams.get('token');
 
+    // Force clear old cached URLs on mount (iOS fix)
+    useEffect(() => {
+        const genomicsApiUrl = localStorage.getItem('genomicsApiUrl');
+        if (genomicsApiUrl && (genomicsApiUrl.includes('192.168') || genomicsApiUrl.includes('localhost') || genomicsApiUrl.startsWith('http://'))) {
+            console.log('[NFC] Clearing cached API URL:', genomicsApiUrl);
+            localStorage.removeItem('genomicsApiUrl');
+            // Force reload apiService
+            window.location.reload();
+        }
+    }, []);
+
     useEffect(() => {
         const checkToken = async () => {
             if (!token) {
@@ -31,11 +42,22 @@ export default function NFCLogin() {
             }
 
             try {
-                const response = await fetch(`${apiService.getApiUrl()}/auth/nfc-login`, {
+                // Use direct fetch instead of apiService to avoid caching issues on iOS
+                const apiUrl = '/api/auth/nfc-login';
+                console.log('NFC Login: Attempting to connect to:', apiUrl);
+
+                // Create abort controller for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token })
+                    body: JSON.stringify({ token }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 const data = await response.json();
 
@@ -52,8 +74,19 @@ export default function NFCLogin() {
                     setTimeout(() => navigate('/login'), 2000);
                 }
             } catch (error) {
-                console.error(error);
-                setMessage('Server error');
+                console.error('NFC Login Error:', error);
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+
+                let errorMessage = 'Unable to connect to server. Please check your internet connection.';
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Connection timeout. Please try again.';
+                }
+
+                setStatus('ERROR');
+                setMessage(errorMessage);
+                toast.error('Connection failed. Please try again.');
+                setTimeout(() => navigate('/login'), 3000);
             }
         };
 
@@ -65,7 +98,7 @@ export default function NFCLogin() {
     const handleVerifyOTP = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(`${apiService.getApiUrl()}/auth/verify-nfc-otp`, {
+            const response = await fetch('/api/auth/verify-nfc-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, otp })
@@ -87,7 +120,7 @@ export default function NFCLogin() {
     const handleRegister = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(`${apiService.getApiUrl()}/auth/register-nfc-user`, {
+            const response = await fetch('/api/auth/register-nfc-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...formData, nfcToken: token })
@@ -182,6 +215,19 @@ export default function NFCLogin() {
                             A secure password will be sent to your email.
                         </p>
                     </form>
+                )}
+
+                {status === 'ERROR' && (
+                    <div className="flex flex-col items-center">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                            <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-900 mb-2">Connection Error</h2>
+                        <p className="text-slate-600 mb-4 text-sm">{message}</p>
+                        <p className="text-xs text-slate-500">Redirecting to login...</p>
+                    </div>
                 )}
 
             </div>

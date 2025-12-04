@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>iOS NFC Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+        }
+
+        #log {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>iOS NFC Login Test</h1>
+    <button onclick="testNFC()">Test NFC Login</button>
+    <div id="log"></div>
+
+    <script>
+        function log(msg) {
+            document.getElementById('log').innerHTML += msg + '\n';
+            console.log(msg);
+        }
+
+        async function testNFC() {
+            const token = 'f44b80af46572abc1a0283995fee7c3b66a194da439a53304ac003e29ef320bf';
+            const url = '/api/auth/nfc-login';
+
+            log('Testing NFC login...');
+            log('URL: ' + url);
+            log('Token: ' + token);
+
+            try {
+                log('Sending request...');
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+
+                log('Response status: ' + response.status);
+                log('Response ok: ' + response.ok);
+
+                const data = await response.json();
+                log('Response data: ' + JSON.stringify(data, null, 2));
+
+            } catch (error) {
+                log('ERROR: ' + error.name);
+                log('ERROR Message: ' + error.message);
+                log('ERROR Stack: ' + error.stack);
+            }
+        }
+    </script>
+</body>
+
+</html>

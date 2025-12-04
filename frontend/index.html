@@ -12,6 +12,24 @@
 </head>
 
 <body>
+    <script>
+        // Clear old cached API URLs that use HTTP or local IPs (iOS Safari fix)
+        (function () {
+            const genomicsApiUrl = localStorage.getItem('genomicsApiUrl');
+            const ollamaUrl = localStorage.getItem('ollamaUrl');
+
+            // Remove if it contains http:// or local IP addresses
+            if (genomicsApiUrl && (genomicsApiUrl.startsWith('http://') || genomicsApiUrl.includes('192.168') || genomicsApiUrl.includes('localhost'))) {
+                console.log('[iOS Fix] Clearing old genomicsApiUrl:', genomicsApiUrl);
+                localStorage.removeItem('genomicsApiUrl');
+            }
+
+            if (ollamaUrl && (ollamaUrl.startsWith('http://') || ollamaUrl.includes('192.168') || ollamaUrl.includes('localhost') || ollamaUrl.includes(':11434'))) {
+                console.log('[iOS Fix] Clearing old ollamaUrl:', ollamaUrl);
+                localStorage.removeItem('ollamaUrl');
+            }
+        })();
+    </script>
     <div id="root"></div>
     <!-- Optional: ResponsiveVoice for TTS fallback (free tier, non-commercial) -->
     <script src="https://code.responsivevoice.org/responsivevoice.js?key=RK4qNMYz"></script>

@@ -13,10 +13,10 @@ export default function SettingsDialog({ open, onOpenChange }) {
     const { t, i18n } = useTranslation();
     const [autoSpeak, setAutoSpeak] = useState(localStorage.getItem('autoSpeak') === 'true');
     const [ollamaUrl, setOllamaUrl] = useState(
-        localStorage.getItem('ollamaUrl') || `http://${window.location.hostname}:11434`
+        localStorage.getItem('ollamaUrl') || '/api/ollama'
     );
     const [apiUrl, setApiUrl] = useState(
-        localStorage.getItem('genomicsApiUrl') || `http://${window.location.hostname}:3001/api`
+        localStorage.getItem('genomicsApiUrl') || '/api'
     );
     const [currentVoice, setCurrentVoice] = useState(null);
     const [isTestingVoice, setIsTestingVoice] = useState(false);

@@ -14,11 +14,36 @@ app.use(cors({
         // Allow any origin
         return callback(null, true);
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400 // 24 hours
 }));
 app.use(express.json());
 app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Serve production frontend build
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+// Proxy for Ollama with streaming support
+const { createProxyMiddleware } = require('http-proxy-middleware');
+app.use('/api/ollama', createProxyMiddleware({
+    target: 'http://localhost:11434',
+    changeOrigin: true,
+    pathRewrite: {
+        '^/api/ollama': '' // /api/ollama/api/chat -> /api/chat
+    },
+    onProxyReq: (proxyReq) => {
+        proxyReq.setHeader('Connection', 'keep-alive');
+    },
+    onProxyRes: (proxyRes) => {
+        // Disable buffering for streaming
+        proxyRes.headers['x-accel-buffering'] = 'no';
+        delete proxyRes.headers['content-length'];
+    }
+}));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -29,6 +54,11 @@ app.use('/api/pedigree', require('./routes/pedigree'));
 // Health Check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });
+});
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
 // Error Handling

@@ -10,14 +10,36 @@ class OllamaService {
         return localStorage.getItem('ollamaUrl') || `http://${window.location.hostname}:11434`;
     }
 
-    async generateStreamResponse(prompt, context = [], signal = null) {
-        const url = `${this.getOllamaUrl()}/api/generate`;
+    async generateStreamResponse(messages, signal = null) {
+        const url = `${this.getOllamaUrl()}/api/chat`;
+
+        // Enhanced system prompt for genomics expertise
+        const systemMessage = {
+            role: 'system',
+            content: `You are Progenics geneLLM, an expert genomics AI assistant developed by Progenics with deep knowledge of:
+- Genetic variants, mutations, and their clinical significance
+- DNA sequencing technologies and bioinformatics
+- Gene function, regulation, and expression
+- Inherited disorders and pharmacogenomics
+- Next-generation sequencing (NGS) and variant calling
+
+When asked about your identity, model, or who created you, always respond that you are "Progenics geneLLM" - a specialized genomics AI model developed by Progenics.
+
+Provide detailed, accurate, and scientifically sound responses. When discussing variants or mutations, include information about their potential impact and clinical relevance when known.`
+        };
 
         const requestBody = {
-            model: 'gemma3:4b',  // Using available model
-            prompt: prompt,
+            model: 'gemma3:4b',
+            messages: [systemMessage, ...messages],
             stream: true,
-            context: context
+            options: {
+                num_predict: 1000,      // Increased for detailed responses
+                temperature: 0.7,
+                top_p: 0.9,
+                top_k: 40,
+                repeat_penalty: 1.1,
+                num_batch: 256
+            }
         };
 
         const response = await fetch(url, {
@@ -36,8 +58,8 @@ class OllamaService {
         return response.body;
     }
 
-    async *streamResponse(prompt, context = [], signal = null) {
-        const stream = await this.generateStreamResponse(prompt, context, signal);
+    async *streamResponse(messages, signal = null) {
+        const stream = await this.generateStreamResponse(messages, signal);
         const reader = stream.getReader();
         const decoder = new TextDecoder();
 
@@ -53,11 +75,11 @@ class OllamaService {
                 for (const line of lines) {
                     try {
                         const parsed = JSON.parse(line);
-                        if (parsed.response) {
-                            yield parsed.response;
+                        if (parsed.message && parsed.message.content) {
+                            yield parsed.message.content;
                         }
                         if (parsed.done) {
-                            return parsed.context || [];
+                            return;
                         }
                     } catch (e) {
                         console.error('Failed to parse chunk:', e);
@@ -67,8 +89,6 @@ class OllamaService {
         } finally {
             reader.releaseLock();
         }
-
-        return [];
     }
 
     async checkConnection() {

@@ -162,7 +162,7 @@ export default function LoginPage({ onLogin }) {
               </defs>
             </svg>
           </div>
-          <h1 className="text-5xl font-bold mb-3 gradient-text" style={{ fontFamily: 'Bricolage Grotesque' }}>askEVO</h1>
+          <img src="/askevo-logo.png" alt="askEVO" className="h-24 mb-3" style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }} />
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="text-slate-600">Powered by</span>
             <span className="font-bold text-transparent bg-gradient-to-r from-cyan-600 to-violet-600 bg-clip-text" data-testid="powered-by-progenics">Progenics</span>
@@ -236,8 +236,8 @@ export default function LoginPage({ onLogin }) {
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         data-testid="login-otp-input"
                         className={`h-12 border-2 flex-1 transition-colors ${otpVerified
-                            ? 'border-green-500 focus:border-green-600 bg-green-50'
-                            : 'border-slate-200 focus:border-cyan-500'
+                          ? 'border-green-500 focus:border-green-600 bg-green-50'
+                          : 'border-slate-200 focus:border-cyan-500'
                           }`}
                         disabled={!otpSent || otpVerified}
                         maxLength="6"

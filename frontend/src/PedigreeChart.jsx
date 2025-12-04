@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, User, Trash2, GitBranch, MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import PedigreeVisualization from '@/components/PedigreeVisualization';
 
 export default function PedigreeChart() {
   const [members, setMembers] = useState([
@@ -36,7 +37,7 @@ export default function PedigreeChart() {
     carrier: false,
     deceased: false,
   });
-  
+
   // Interview state
   const [interviewMode, setInterviewMode] = useState('patient'); // 'patient' or 'doctor'
   const [interviewMessages, setInterviewMessages] = useState([]);
@@ -108,7 +109,7 @@ export default function PedigreeChart() {
     setPatientInput('');
     setDoctorInput('');
     setInterviewDialogOpen(true);
-    
+
     if (interviewMode === 'patient') {
       setInterviewMessages([{
         type: 'bot',
@@ -160,15 +161,15 @@ export default function PedigreeChart() {
       return;
     }
 
-    setInterviewMessages(prev => [...prev, 
-      {
-        type: 'user',
-        text: doctorInput
-      },
-      {
-        type: 'bot',
-        text: "Analyzing the family history... I'll create a comprehensive pedigree chart based on the information provided."
-      }
+    setInterviewMessages(prev => [...prev,
+    {
+      type: 'user',
+      text: doctorInput
+    },
+    {
+      type: 'bot',
+      text: "Analyzing the family history... I'll create a comprehensive pedigree chart based on the information provided."
+    }
     ]);
 
     processInterviewData();
@@ -213,7 +214,7 @@ export default function PedigreeChart() {
 
       setMembers(prev => [...prev, ...newMembers]);
       toast.success('Pedigree chart created successfully!');
-      
+
       setTimeout(() => {
         setInterviewDialogOpen(false);
       }, 1500);
@@ -268,11 +269,11 @@ export default function PedigreeChart() {
               <h3 className="text-sm font-bold text-slate-900 mb-4" style={{ fontFamily: 'Bricolage Grotesque' }}>Legend</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border-3 border-blue-600 rounded shadow-sm" />
+                  <div className="w-8 h-8 border-3 border-blue-700 bg-blue-200 rounded shadow-sm" />
                   <span className="text-sm font-semibold text-slate-700">Male</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border-3 border-pink-600 rounded-full shadow-sm" />
+                  <div className="w-8 h-8 border-3 border-pink-700 bg-pink-200 rounded-full shadow-sm" />
                   <span className="text-sm font-semibold text-slate-700">Female</span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -280,7 +281,7 @@ export default function PedigreeChart() {
                   <span className="text-sm font-semibold text-slate-700">Affected</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border-3 border-slate-700 rounded relative shadow-sm overflow-hidden">
+                  <div className="w-8 h-8 border-3 border-slate-700 rounded relative shadow-sm overflow-hidden bg-white">
                     <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 w-1/2" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700">Carrier</span>
@@ -309,6 +310,22 @@ export default function PedigreeChart() {
                 </div>
               ) : (
                 <div className="space-y-8">
+                  {/* SVG Pedigree Visualization */}
+                  <div className="bg-gradient-to-br from-white to-emerald-50 /20 p-6 rounded-2xl border-2 border-emerald-100">
+                    <h4 className="text-sm font-bold text-slate-900 mb-6" style={{ fontFamily: 'Bricolage Grotesque' }}>
+                      Pedigree Diagram
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <PedigreeVisualization members={members} />
+                    </div>
+                  </div>
+
+                  {/* Original generation-based display for reference */}
+                  <div className="pt-6 border-t-2 border-emerald-100">
+                    <h4 className="text-sm font-bold text-slate-900 mb-4" style={{ fontFamily: 'Bricolage Grotesque' }}>
+                      Family Members by Generation
+                    </h4>
+                  </div>
                   {generations.map((gen) => {
                     const genMembers = members.filter((m) => m.generation === gen);
                     return (
@@ -329,24 +346,21 @@ export default function PedigreeChart() {
 
                               {/* Member Symbol */}
                               <div
-                                className={`relative w-20 h-20 border-3 cursor-pointer transition-all hover:scale-110 shadow-lg ${
-                                  member.gender === 'male' ? 'rounded-lg' : 'rounded-full'
-                                } ${
-                                  member.affected
+                                className={`relative w-20 h-20 border-3 cursor-pointer transition-all hover:scale-110 shadow-lg ${member.gender === 'male' ? 'rounded-lg' : 'rounded-full'
+                                  } ${member.affected
                                     ? 'bg-gradient-to-br from-red-500 to-red-600 border-red-600'
                                     : member.carrier
-                                    ? 'border-slate-700 bg-white'
-                                    : member.gender === 'male'
-                                    ? 'border-blue-600 bg-white'
-                                    : 'border-pink-600 bg-white'
-                                }`}
+                                      ? 'border-slate-700 bg-white'
+                                      : member.gender === 'male'
+                                        ? 'border-blue-600 bg-white'
+                                        : 'border-pink-600 bg-white'
+                                  }`}
                                 onClick={() => handleEditMember(member)}
                               >
                                 {member.carrier && !member.affected && (
                                   <div
-                                    className={`absolute inset-0 w-1/2 bg-gradient-to-r from-amber-500 to-orange-500 ${
-                                      member.gender === 'male' ? 'rounded-l-lg' : 'rounded-l-full'
-                                    }`}
+                                    className={`absolute inset-0 w-1/2 bg-gradient-to-r from-amber-500 to-orange-500 ${member.gender === 'male' ? 'rounded-l-lg' : 'rounded-l-full'
+                                      }`}
                                   />
                                 )}
                                 {member.deceased && (
@@ -356,9 +370,8 @@ export default function PedigreeChart() {
                                 )}
                                 <div className="absolute inset-0 flex items-center justify-center">
                                   <User
-                                    className={`h-8 w-8 ${
-                                      member.affected ? 'text-white' : 'text-slate-400'
-                                    }`}
+                                    className={`h-8 w-8 ${member.affected ? 'text-white' : 'text-slate-400'
+                                      }`}
                                   />
                                 </div>
                               </div>
@@ -388,11 +401,11 @@ export default function PedigreeChart() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </ScrollArea>
+        </div >
+      </ScrollArea >
 
       {/* Add/Edit Member Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      < Dialog open={dialogOpen} onOpenChange={setDialogOpen} >
         <DialogContent className="max-w-md" data-testid="member-dialog">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold" style={{ fontFamily: 'Bricolage Grotesque' }}>
@@ -496,8 +509,8 @@ export default function PedigreeChart() {
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={handleSaveMember} 
+              <Button
+                onClick={handleSaveMember}
                 data-testid="save-member-button"
                 className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold"
               >
@@ -506,38 +519,37 @@ export default function PedigreeChart() {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Interview Dialog */}
-      <Dialog open={interviewDialogOpen} onOpenChange={setInterviewDialogOpen}>
+      < Dialog open={interviewDialogOpen} onOpenChange={setInterviewDialogOpen} >
         <DialogContent className="max-w-3xl max-h-[80vh]" data-testid="interview-dialog">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold" style={{ fontFamily: 'Bricolage Grotesque' }}>
               Family History Interview
             </DialogTitle>
           </DialogHeader>
-          
+
           <Tabs value={interviewMode} onValueChange={setInterviewMode} className="pt-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="patient" className="font-semibold" data-testid="patient-mode-tab">Patient Interview</TabsTrigger>
               <TabsTrigger value="doctor" className="font-semibold" data-testid="doctor-mode-tab">Doctor Input</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="patient" className="space-y-4">
               <p className="text-sm text-slate-600">
                 I'll ask you simple questions about your family. Answer each question and I'll create your pedigree chart.
               </p>
-              
+
               <ScrollArea className="h-96 border-2 border-cyan-200 rounded-xl p-4 bg-gradient-to-br from-cyan-50/30 to-violet-50/30">
                 <div className="space-y-3">
                   {interviewMessages.map((msg, index) => (
                     <div
                       key={index}
-                      className={`p-3 rounded-xl animate-fade-in ${
-                        msg.type === 'bot'
-                          ? 'bg-white border-2 border-cyan-100 mr-12'
-                          : 'bg-gradient-to-r from-fuchsia-100 to-pink-100 ml-12 border-2 border-fuchsia-200'
-                      }`}
+                      className={`p-3 rounded-xl animate-fade-in ${msg.type === 'bot'
+                        ? 'bg-white border-2 border-cyan-100 mr-12'
+                        : 'bg-gradient-to-r from-fuchsia-100 to-pink-100 ml-12 border-2 border-fuchsia-200'
+                        }`}
                     >
                       <p className="text-sm font-semibold text-slate-600 mb-1">
                         {msg.type === 'bot' ? 'AI Assistant' : 'You'}
@@ -547,7 +559,7 @@ export default function PedigreeChart() {
                   ))}
                 </div>
               </ScrollArea>
-              
+
               <div className="flex gap-2">
                 <Input
                   value={patientInput}
@@ -557,7 +569,7 @@ export default function PedigreeChart() {
                   className="border-2 border-cyan-200 focus:border-cyan-400"
                   data-testid="patient-input"
                 />
-                <Button 
+                <Button
                   onClick={handlePatientAnswer}
                   className="bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white font-bold"
                   data-testid="patient-send-button"
@@ -566,12 +578,12 @@ export default function PedigreeChart() {
                 </Button>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="doctor" className="space-y-4">
               <p className="text-sm text-slate-600">
                 Enter complete family history details. Describe family structure, relationships, and genetic conditions. The AI will analyze and create the pedigree chart.
               </p>
-              
+
               <Textarea
                 value={doctorInput}
                 onChange={(e) => setDoctorInput(e.target.value)}
@@ -579,8 +591,8 @@ export default function PedigreeChart() {
                 className="min-h-[300px] border-2 border-emerald-200 focus:border-emerald-400"
                 data-testid="doctor-input"
               />
-              
-              <Button 
+
+              <Button
                 onClick={handleDoctorSubmit}
                 className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold py-6 text-lg"
                 data-testid="doctor-submit-button"
@@ -591,7 +603,7 @@ export default function PedigreeChart() {
             </TabsContent>
           </Tabs>
         </DialogContent>
-      </Dialog>
-    </div>
+      </Dialog >
+    </div >
   );
 }

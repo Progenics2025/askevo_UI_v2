@@ -55,7 +55,7 @@ export default function Sidebar({
               <Dna className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold gradient-text" style={{ fontFamily: 'Bricolage Grotesque' }}>askEVO</h1>
+              <img src="/askevo-logo.png" alt="askEVO" className="h-8" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
               <p className="text-xs text-slate-500 font-semibold">by Progenics</p>
             </div>
           </div>
@@ -75,8 +75,8 @@ export default function Sidebar({
           <button
             onClick={() => setActiveSection('genomics')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeSection === 'genomics'
-                ? 'bg-gradient-to-r from-cyan-500 to-violet-500 text-white shadow-lg scale-[1.02]'
-                : 'text-slate-700 hover:bg-slate-100'
+              ? 'bg-gradient-to-r from-cyan-500 to-violet-500 text-white shadow-lg scale-[1.02]'
+              : 'text-slate-700 hover:bg-slate-100'
               }`}
             data-testid="genomics-assistant-nav"
           >
@@ -87,8 +87,8 @@ export default function Sidebar({
           <button
             onClick={() => setActiveSection('pedigree')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeSection === 'pedigree'
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg scale-[1.02]'
-                : 'text-slate-700 hover:bg-slate-100'
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg scale-[1.02]'
+              : 'text-slate-700 hover:bg-slate-100'
               }`}
             data-testid="pedigree-chart-nav"
           >
@@ -111,8 +111,8 @@ export default function Sidebar({
                 <div
                   key={chat.id}
                   className={`group flex items-center gap-2 px-3 py-3 rounded-xl cursor-pointer transition-all ${activeChat === chat.id
-                      ? 'bg-gradient-to-r from-cyan-50 to-violet-50 border-2 border-cyan-200 shadow-sm'
-                      : 'hover:bg-slate-100 border-2 border-transparent'
+                    ? 'bg-gradient-to-r from-cyan-50 to-violet-50 border-2 border-cyan-200 shadow-sm'
+                    : 'hover:bg-slate-100 border-2 border-transparent'
                     }`}
                   onClick={() => {
                     setActiveChat(chat.id);

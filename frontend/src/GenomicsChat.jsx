@@ -21,7 +21,7 @@ export default function GenomicsChat({ chatId, chatName }) {
     {
       id: '1',
       type: 'bot',
-      content: 'Hello! I\'m your Genomics Assistant. I can analyze genetic data, answer questions about mutations, and help with genomic interpretations. You can also upload VCF, Excel, CSV, or text files for analysis!',
+      content: 'Hello! I\'m Progenics geneLLM, your specialized genomics AI assistant. I can analyze genetic data, answer questions about mutations, and help with genomic interpretations. You can also upload VCF, Excel, CSV, or text files for analysis!',
       timestamp: new Date(),
     },
   ]);
@@ -176,32 +176,38 @@ export default function GenomicsChat({ chatId, chatName }) {
     }, 100);
   };
 
-  const handleSend = async () => {
-    if (!inputValue.trim()) return;
+  const handleSend = async (overridePrompt = null, skipUserMessage = false, overrideMessages = null) => {
+    const userPrompt = overridePrompt || inputValue;
+    if (!userPrompt.trim()) return;
 
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: inputValue,
-      timestamp: new Date(),
-    };
+    const currentMessages = overrideMessages || messages;
 
-    // Optimistic update - show message immediately
-    setMessages((prev) => [...prev, userMessage]);
-    const userPrompt = inputValue;
-    setInputValue('');
+    let saveUserMessagePromise = Promise.resolve();
 
-    // Save user message to database (async, non-blocking)
-    const saveUserMessagePromise = (async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (token && !chatId.startsWith('default-')) {
-          await apiService.saveMessage(chatId, 'user', userPrompt);
+    if (!skipUserMessage) {
+      const userMessage = {
+        id: Date.now().toString(),
+        type: 'user',
+        content: userPrompt,
+        timestamp: new Date(),
+      };
+
+      // Optimistic update - show message immediately
+      setMessages((prev) => [...prev, userMessage]);
+      setInputValue('');
+
+      // Save user message to database (async, non-blocking)
+      saveUserMessagePromise = (async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (token && !chatId.startsWith('default-')) {
+            await apiService.saveMessage(chatId, 'user', userPrompt);
+          }
+        } catch (error) {
+          console.error('Failed to save user message:', error);
         }
-      } catch (error) {
-        console.error('Failed to save user message:', error);
-      }
-    })();
+      })();
+    }
 
     // Create bot message placeholder for streaming
     const botMessageId = (Date.now() + 1).toString();
@@ -213,7 +219,16 @@ export default function GenomicsChat({ chatId, chatName }) {
       streaming: true
     };
 
-    setMessages((prev) => [...prev, botMessage]);
+    setMessages((prev) => {
+      // If we are overriding messages (e.g. edit), we should append to THAT list, not the stale prev state
+      // But setMessages receives 'prev'. 
+      // If we just did setMessages(truncated) in handleSaveEdit, 'prev' here might be the truncated one IF react batched it?
+      // Actually, if we passed overrideMessages, we probably want to ensure the bot message is added to THAT.
+      if (overrideMessages) {
+        return [...overrideMessages, botMessage];
+      }
+      return [...prev, botMessage];
+    });
 
     try {
       // OPTIMIZATION 1: Lazy Context Building (saves 500-1500ms when not needed)
@@ -240,26 +255,32 @@ export default function GenomicsChat({ chatId, chatName }) {
         ]);
       }
 
-      // OPTIMIZATION 2: Build lightweight conversation context (last 5 messages only)
-      const contextMessages = messages
-        .slice(-5)  // Reduced from 10 for speed
+      // Build messages array for Ollama chat API (like ChatGPT/Claude)
+      // Include last 10 messages for context
+      const messagesToSend = currentMessages
+        .slice(-10)  // Last 10 messages for context
         .filter(msg => !msg.streaming && msg.content)
-        .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content.substring(0, 200)}`)  // Truncate long messages
-        .join('\n\n');
+        .map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }));
 
-      // Construct optimized prompt
-      let finalPrompt = userPrompt;
+      // Add genomics context to the current user message if available
+      let currentUserContent = userPrompt;
       if (genomicsContext) {
-        finalPrompt = `[Genomics Data]: ${genomicsContext.substring(0, 500)}\n\n${userPrompt}`;
-      }
-      if (contextMessages) {
-        finalPrompt = `[Context]: ${contextMessages}\n\n${finalPrompt}`;
+        currentUserContent = `Genomic Data Context:\n${genomicsContext}\n\nQuestion: ${userPrompt}`;
       }
 
-      // Stream response from Ollama with optimized context
+      // Add the current user message
+      messagesToSend.push({
+        role: 'user',
+        content: currentUserContent
+      });
+
+      // Stream response from Ollama with conversation history
       let fullResponse = '';
 
-      for await (const chunk of ollamaService.streamResponse(finalPrompt, [], null)) {
+      for await (const chunk of ollamaService.streamResponse(messagesToSend, null)) {
         fullResponse += chunk;
 
         // Update the bot message with streamed content
@@ -287,7 +308,7 @@ export default function GenomicsChat({ chatId, chatName }) {
           const token = localStorage.getItem('token');
           if (token && !chatId.startsWith('default-')) {
             await saveUserMessagePromise; // Wait for user message to be saved first
-            await apiService.saveMessage(chatId, 'assistant', fullResponse);
+            await apiService.saveMessage(chatId, 'bot', fullResponse);
           }
         } catch (error) {
           console.error('Failed to save bot response:', error);
@@ -363,21 +384,11 @@ export default function GenomicsChat({ chatId, chatName }) {
     if (messageIndex > 0) {
       const previousUserMessage = messages[messageIndex - 1];
 
-      const newBotMessage = {
-        id: Date.now().toString(),
-        type: 'bot',
-        content: `Here's an alternative analysis for "${previousUserMessage.content}": Considering different genomic perspectives and recent research findings, we can explore alternative interpretations of the genetic data and their clinical significance.`,
-        timestamp: new Date(),
-      };
+      // Remove the old bot message
+      setMessages(prev => prev.filter(m => m.id !== messageId));
 
-      setMessages((prev) => [
-        ...prev.slice(0, messageIndex),
-        newBotMessage,
-        ...prev.slice(messageIndex + 1),
-      ]);
-
-      toast.success(t('regenerated'));
-      scrollToBottom();
+      // Regenerate response
+      handleSend(previousUserMessage.content, true);
     }
   };
 
@@ -388,12 +399,21 @@ export default function GenomicsChat({ chatId, chatName }) {
 
   const handleSaveEdit = (messageId) => {
     if (editValue.trim()) {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === messageId ? { ...msg, content: editValue } : msg
-        )
-      );
-      toast.success(t('messageUpdated'));
+      const messageIndex = messages.findIndex((m) => m.id === messageId);
+      if (messageIndex !== -1) {
+        // Truncate conversation after this message
+        const truncatedMessages = messages.slice(0, messageIndex + 1);
+        // Update the edited message content
+        truncatedMessages[messageIndex] = { ...truncatedMessages[messageIndex], content: editValue };
+
+        // Update state
+        setMessages(truncatedMessages);
+
+        // Trigger regeneration with new content and truncated context
+        handleSend(editValue, true, truncatedMessages);
+
+        toast.success(t('messageUpdated'));
+      }
     }
     setEditingMessageId(null);
   };
@@ -562,6 +582,15 @@ export default function GenomicsChat({ chatId, chatName }) {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => ttsService.speak(message.content, i18n.language)}
+                            className="h-8 px-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            title={t('readAloud')}
+                          >
+                            <Volume2 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleLike()}
                             className="h-8 px-2 text-slate-500 hover:text-green-600 hover:bg-green-50 transition-colors"
                             data-testid={`like-${message.id}`}
@@ -599,8 +628,8 @@ export default function GenomicsChat({ chatId, chatName }) {
             }`}></div>
           <span>
             {ollamaConnected
-              ? `${modelName}`
-              : 'Ollama Disconnected'}
+              ? 'Progenics geneLLM'
+              : 'Model Disconnected'}
           </span>
         </div>
 

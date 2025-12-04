@@ -24,6 +24,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/files', require('./routes/files'));
+app.use('/api/pedigree', require('./routes/pedigree'));
 
 // Health Check
 app.get('/api/health', (req, res) => {

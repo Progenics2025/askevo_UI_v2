@@ -205,6 +205,48 @@ class ApiService {
 
         return response.json();
     }
+
+    // Pedigree
+    async savePedigree(caseNumber, data) {
+        const response = await fetch(`${this.getApiUrl()}/pedigree/save`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ case_number: caseNumber, data })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to save pedigree');
+        }
+
+        return response.json();
+    }
+
+    async listPedigrees() {
+        const response = await fetch(`${this.getApiUrl()}/pedigree/list`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch pedigrees');
+        }
+
+        return response.json();
+    }
+
+    async getPedigree(caseNumber) {
+        const response = await fetch(`${this.getApiUrl()}/pedigree/${caseNumber}`, {
+            method: 'GET',
+            headers: this.getHeaders(),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch pedigree');
+        }
+
+        return response.json();
+    }
 }
 
 export const apiService = new ApiService();

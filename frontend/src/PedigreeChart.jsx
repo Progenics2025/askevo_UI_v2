@@ -8,9 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, User, Trash2, GitBranch, MessageSquare, Send, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, User, Trash2, GitBranch, MessageSquare, Send, ChevronDown, ChevronUp, Save, BookOpen, X } from 'lucide-react';
 import { toast } from 'sonner';
 import PedigreeVisualization from '@/components/PedigreeVisualization';
+import { apiService } from '@/lib/apiService';
 
 export default function PedigreeChart() {
   const [members, setMembers] = useState([
@@ -53,8 +54,11 @@ export default function PedigreeChart() {
   ]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [caseNumber, setCaseNumber] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -172,6 +176,22 @@ export default function PedigreeChart() {
   const handleDeleteMember = (id) => {
     setMembers((prev) => prev.filter((m) => m.id !== id));
     toast.success('Member removed');
+  };
+
+  const handleSavePedigree = async () => {
+    if (!caseNumber.trim()) {
+      toast.error('Please enter a Case Number');
+      return;
+    }
+
+    try {
+      await apiService.savePedigree(caseNumber, members);
+      toast.success('Pedigree saved successfully');
+      setSaveDialogOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || 'Failed to save pedigree');
+    }
   };
 
   const startInterview = () => {
@@ -348,7 +368,7 @@ export default function PedigreeChart() {
   const generations = Array.from(new Set(members.map((m) => m.generation))).sort();
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/30" data-testid="pedigree-chart-container">
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/30 relative overflow-hidden" data-testid="pedigree-chart-container">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-md border-b border-emerald-100 px-6 py-4 shadow-sm">
         <div className="flex items-center justify-between">
@@ -365,12 +385,27 @@ export default function PedigreeChart() {
           </div>
           <div className="flex gap-3">
             <Button
+              onClick={() => setShowGuide(!showGuide)}
+              variant="outline"
+              className="font-bold shadow-sm"
+            >
+              <BookOpen className="mr-2 h-5 w-5" />
+              Guide
+            </Button>
+            <Button
+              onClick={() => setSaveDialogOpen(true)}
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-bold shadow-lg transition-all hover:scale-105"
+            >
+              <Save className="mr-2 h-5 w-5" />
+              Save
+            </Button>
+            <Button
               onClick={startInterview}
               className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold shadow-lg transition-all hover:scale-105"
               data-testid="interview-button"
             >
               <MessageSquare className="mr-2 h-5 w-5" />
-              Family History Interview
+              Interview
             </Button>
             <Button
               onClick={handleAddMember}
@@ -384,149 +419,224 @@ export default function PedigreeChart() {
         </div>
       </div>
 
-      {/* Pedigree Visualization */}
-      <ScrollArea className="flex-1 p-6">
-        <div className="max-w-6xl mx-auto">
-          {/* Legend */}
-          <Card className="mb-6 bg-white/80 backdrop-blur-sm shadow-lg border-2 border-emerald-100">
-            <CardContent className="pt-6">
-              <h3 className="text-sm font-bold text-slate-900 mb-4" style={{ fontFamily: 'Bricolage Grotesque' }}>Legend</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border-3 border-blue-700 bg-blue-200 rounded shadow-sm" />
-                  <span className="text-sm font-semibold text-slate-700">Male</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border-3 border-pink-700 bg-pink-200 rounded-full shadow-sm" />
-                  <span className="text-sm font-semibold text-slate-700">Female</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded shadow-sm" />
-                  <span className="text-sm font-semibold text-slate-700">Affected</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border-3 border-slate-700 rounded relative shadow-sm overflow-hidden bg-white">
-                    <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 w-1/2" />
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        <ScrollArea className="flex-1 p-6">
+          <div className="max-w-6xl mx-auto">
+            {/* Legend */}
+            <Card className="mb-6 bg-white/80 backdrop-blur-sm shadow-lg border-2 border-emerald-100">
+              <CardContent className="pt-6">
+                <h3 className="text-sm font-bold text-slate-900 mb-4" style={{ fontFamily: 'Bricolage Grotesque' }}>Legend</h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 border-3 border-blue-700 bg-blue-200 rounded shadow-sm" />
+                    <span className="text-sm font-semibold text-slate-700">Male</span>
                   </div>
-                  <span className="text-sm font-semibold text-slate-700">Carrier</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 border-3 border-pink-700 bg-pink-200 rounded-full shadow-sm" />
+                    <span className="text-sm font-semibold text-slate-700">Female</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded shadow-sm" />
+                    <span className="text-sm font-semibold text-slate-700">Affected</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 border-3 border-slate-700 rounded relative shadow-sm overflow-hidden bg-white">
+                      <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 w-1/2" />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700">Carrier</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 border-3 border-slate-300 bg-white rounded shadow-sm" />
+                    <span className="text-sm font-semibold text-slate-700">Unaffected</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border-3 border-slate-300 bg-white rounded shadow-sm" />
-                  <span className="text-sm font-semibold text-slate-700">Unaffected</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Pedigree Chart */}
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-2 border-emerald-100">
-            <CardContent className="pt-6">
-              {generations.length === 0 ? (
-                <div className="text-center py-16">
-                  <GitBranch className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500 font-medium mb-6">No family members added yet</p>
-                  <div className="flex gap-3 justify-center">
-                    <Button onClick={startInterview} variant="outline" className="font-semibold">
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Start Interview
-                    </Button>
-                    <Button onClick={handleAddMember} variant="outline" className="font-semibold">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Manually
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  {/* SVG Pedigree Visualization */}
-                  <div className="bg-gradient-to-br from-white to-emerald-50 /20 p-6 rounded-2xl border-2 border-emerald-100">
-                    <h4 className="text-sm font-bold text-slate-900 mb-6" style={{ fontFamily: 'Bricolage Grotesque' }}>
-                      Pedigree Diagram
-                    </h4>
-                    <div className="overflow-x-auto">
-                      <PedigreeVisualization members={members} />
+            {/* Pedigree Chart */}
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-2 border-emerald-100">
+              <CardContent className="pt-6">
+                {generations.length === 0 ? (
+                  <div className="text-center py-16">
+                    <GitBranch className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500 font-medium mb-6">No family members added yet</p>
+                    <div className="flex gap-3 justify-center">
+                      <Button onClick={startInterview} variant="outline" className="font-semibold">
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Start Interview
+                      </Button>
+                      <Button onClick={handleAddMember} variant="outline" className="font-semibold">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Manually
+                      </Button>
                     </div>
                   </div>
-
-                  {/* List View */}
-                  <div className="pt-6 border-t-2 border-emerald-100">
-                    <h4 className="text-sm font-bold text-slate-900 mb-4" style={{ fontFamily: 'Bricolage Grotesque' }}>
-                      Family Members List
-                    </h4>
-                  </div>
-                  {generations.map((gen) => {
-                    const genMembers = members.filter((m) => m.generation === gen);
-                    return (
-                      <div key={gen} className="space-y-4" data-testid={`generation-${gen}`}>
-                        <h4 className="text-sm font-bold text-slate-700" style={{ fontFamily: 'Bricolage Grotesque' }}>
-                          Generation {gen}
-                        </h4>
-                        <div className="flex flex-wrap gap-8">
-                          {genMembers.map((member) => (
-                            <div
-                              key={member.id}
-                              className="relative group"
-                              data-testid={`member-${member.id}`}
-                            >
-                              {/* Member Symbol */}
-                              <div
-                                className={`relative w-20 h-20 border-3 cursor-pointer transition-all hover:scale-110 shadow-lg ${member.gender === 'male' ? 'rounded-lg' : 'rounded-full'
-                                  } ${member.affected
-                                    ? 'bg-gradient-to-br from-red-500 to-red-600 border-red-600'
-                                    : member.carrier
-                                      ? 'border-slate-700 bg-white'
-                                      : member.gender === 'male'
-                                        ? 'border-blue-600 bg-white'
-                                        : 'border-pink-600 bg-white'
-                                  }`}
-                                onClick={() => handleEditMember(member)}
-                              >
-                                {member.carrier && !member.affected && (
-                                  <div
-                                    className={`absolute inset-0 w-1/2 bg-gradient-to-r from-amber-500 to-orange-500 ${member.gender === 'male' ? 'rounded-l-lg' : 'rounded-l-full'
-                                      }`}
-                                  />
-                                )}
-                                {member.deceased && (
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-full h-1 bg-slate-900 rotate-45" />
-                                  </div>
-                                )}
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <User
-                                    className={`h-8 w-8 ${member.affected ? 'text-white' : 'text-slate-400'
-                                      }`}
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Member Info */}
-                              <div className="mt-3 text-center">
-                                <p className="text-sm font-bold text-slate-900">{member.name}</p>
-                              </div>
-
-                              {/* Delete Button */}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteMember(member.id)}
-                                className="absolute -top-2 -right-2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 bg-white shadow-lg hover:bg-red-50 hover:text-red-600 rounded-full"
-                                data-testid={`delete-member-${member.id}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
+                ) : (
+                  <div className="space-y-8">
+                    {/* SVG Pedigree Visualization */}
+                    <div className="bg-gradient-to-br from-white to-emerald-50 /20 p-6 rounded-2xl border-2 border-emerald-100">
+                      <h4 className="text-sm font-bold text-slate-900 mb-6" style={{ fontFamily: 'Bricolage Grotesque' }}>
+                        Pedigree Diagram
+                      </h4>
+                      <div className="overflow-x-auto">
+                        <PedigreeVisualization members={members} />
                       </div>
-                    );
-                  })}
+                    </div>
+
+                    {/* List View */}
+                    <div className="pt-6 border-t-2 border-emerald-100">
+                      <h4 className="text-sm font-bold text-slate-900 mb-4" style={{ fontFamily: 'Bricolage Grotesque' }}>
+                        Family Members List
+                      </h4>
+                    </div>
+                    {generations.map((gen) => {
+                      const genMembers = members.filter((m) => m.generation === gen);
+                      return (
+                        <div key={gen} className="space-y-4" data-testid={`generation-${gen}`}>
+                          <h4 className="text-sm font-bold text-slate-700" style={{ fontFamily: 'Bricolage Grotesque' }}>
+                            Generation {gen}
+                          </h4>
+                          <div className="flex flex-wrap gap-8">
+                            {genMembers.map((member) => (
+                              <div
+                                key={member.id}
+                                className="relative group"
+                                data-testid={`member-${member.id}`}
+                              >
+                                {/* Member Symbol */}
+                                <div
+                                  className={`relative w-20 h-20 border-3 cursor-pointer transition-all hover:scale-110 shadow-lg ${member.gender === 'male' ? 'rounded-lg' : 'rounded-full'
+                                    } ${member.affected
+                                      ? 'bg-gradient-to-br from-red-500 to-red-600 border-red-600'
+                                      : member.carrier
+                                        ? 'border-slate-700 bg-white'
+                                        : member.gender === 'male'
+                                          ? 'border-blue-600 bg-white'
+                                          : 'border-pink-600 bg-white'
+                                    }`}
+                                  onClick={() => handleEditMember(member)}
+                                >
+                                  {member.carrier && !member.affected && (
+                                    <div
+                                      className={`absolute inset-0 w-1/2 bg-gradient-to-r from-amber-500 to-orange-500 ${member.gender === 'male' ? 'rounded-l-lg' : 'rounded-l-full'
+                                        }`}
+                                    />
+                                  )}
+                                  {member.deceased && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div className="w-full h-1 bg-slate-900 rotate-45" />
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <User
+                                      className={`h-8 w-8 ${member.affected ? 'text-white' : 'text-slate-400'
+                                        }`}
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Member Info */}
+                                <div className="mt-3 text-center">
+                                  <p className="text-sm font-bold text-slate-900">{member.name}</p>
+                                </div>
+
+                                {/* Delete Button */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteMember(member.id)}
+                                  className="absolute -top-2 -right-2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 bg-white shadow-lg hover:bg-red-50 hover:text-red-600 rounded-full"
+                                  data-testid={`delete-member-${member.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div >
+        </ScrollArea >
+
+        {/* Guide Sidebar */}
+        <div className={`fixed right-0 top-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300 z-50 overflow-y-auto border-l border-slate-200 ${showGuide ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold font-bricolage text-slate-900">User Guide</h3>
+              <Button variant="ghost" size="icon" onClick={() => setShowGuide(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              <section>
+                <h4 className="font-bold text-emerald-600 mb-2">How to Use</h4>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-slate-600">
+                  <li>Click <strong>Add Member</strong> to add individuals manually.</li>
+                  <li>Use <strong>Interview</strong> for AI-assisted creation.</li>
+                  <li>Click on any member symbol to <strong>edit</strong> details.</li>
+                  <li>Use <strong>Save</strong> to store the chart with a Case Number.</li>
+                </ol>
+              </section>
+
+              <section>
+                <h4 className="font-bold text-emerald-600 mb-2">Advanced Features</h4>
+                <ul className="list-disc list-inside space-y-2 text-sm text-slate-600">
+                  <li><strong>Twins:</strong> Edit a member, open Advanced Options, select Twin Type and enter Sibling's ID.</li>
+                  <li><strong>Proband:</strong> Edit the patient and check "Proband" to mark them with an arrow.</li>
+                  <li><strong>Consanguinity:</strong> Check "Consanguineous" in Advanced Options if parents are related.</li>
+                </ul>
+              </section>
+
+              <section>
+                <h4 className="font-bold text-emerald-600 mb-2">Symbol Legend</h4>
+                <div className="space-y-2 text-sm text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-blue-600 bg-blue-100 rounded-sm"></div>
+                    <span>Male</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-pink-600 bg-pink-100 rounded-full"></div>
+                    <span>Female</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-500 rounded-sm"></div>
+                    <span>Affected</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-slate-400 border-dashed rounded-sm"></div>
+                    <span>Adopted</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rotate-45 border-2 border-slate-600 bg-white"></div>
+                    <span>Pregnancy</span>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div >
-      </ScrollArea >
+              </section>
+
+              <section>
+                <h4 className="font-bold text-emerald-600 mb-2">FAQ</h4>
+                <div className="space-y-3 text-sm text-slate-600">
+                  <div>
+                    <p className="font-semibold text-slate-800">How do I delete a member?</p>
+                    <p>Hover over the member symbol and click the trash icon that appears.</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-800">Can I export the chart?</p>
+                    <p>Currently, you can save it to the database using the Save button. Export to PDF/Image is coming soon.</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Add/Edit Member Dialog */}
       < Dialog open={dialogOpen} onOpenChange={setDialogOpen} >
@@ -776,6 +886,34 @@ export default function PedigreeChart() {
           </div>
         </DialogContent>
       </Dialog >
+
+      {/* Save Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold font-bricolage">Save Pedigree Chart</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="case-number" className="font-semibold">Case Number</Label>
+              <Input
+                id="case-number"
+                value={caseNumber}
+                onChange={(e) => setCaseNumber(e.target.value)}
+                placeholder="e.g. CASE-2024-001"
+                className="border-2 border-emerald-200 focus:border-emerald-400"
+              />
+              <p className="text-xs text-slate-500">Enter a unique case number to identify this chart.</p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleSavePedigree} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+                Save Chart
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Interview Dialog */}
       < Dialog open={interviewDialogOpen} onOpenChange={setInterviewDialogOpen} >

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, ThumbsUp, ThumbsDown, Copy, RotateCw, Edit2, Check, Mic, FileUp, Volume2, Upload, PanelLeft } from 'lucide-react';
+import { Send, ThumbsUp, ThumbsDown, Copy, RotateCw, Edit2, Check, Mic, FileUp, Volume2, Upload, PanelLeft, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import FeedbackDialog from './FeedbackDialog';
 import VoiceConversationModal from './VoiceConversationModal';
@@ -36,6 +36,7 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
   const [ollamaConnected, setOllamaConnected] = useState(false);
   const [modelName, setModelName] = useState('gemma3:4b');
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState(null);
   const scrollAreaRef = useRef(null);
   const textareaRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -313,7 +314,7 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
       }
 
       if (localStorage.getItem('autoSpeak') === 'true' && fullResponse) {
-        ttsService.speak(fullResponse, i18n.language);
+        handleSpeak(botMessageId, fullResponse);
       }
 
     } catch (error) {
@@ -344,6 +345,22 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
       }
     } else {
       toast.error('Speech recognition not supported in this browser');
+    }
+  };
+
+  const handleSpeak = async (messageId, content) => {
+    if (speakingMessageId === messageId) {
+      ttsService.cancel();
+      setSpeakingMessageId(null);
+    } else {
+      setSpeakingMessageId(messageId);
+      try {
+        await ttsService.speak(content, i18n.language);
+      } catch (error) {
+        console.error('TTS error:', error);
+      } finally {
+        setSpeakingMessageId((prev) => (prev === messageId ? null : prev));
+      }
     }
   };
 
@@ -544,11 +561,18 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => ttsService.speak(message.content, i18n.language)}
-                            className="h-8 px-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                            title={t('readAloud')}
+                            onClick={() => handleSpeak(message.id, message.content)}
+                            className={`h-8 px-2 transition-colors ${speakingMessageId === message.id
+                                ? 'text-red-500 hover:text-red-600 hover:bg-red-50'
+                                : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
+                              }`}
+                            title={speakingMessageId === message.id ? 'Stop Speaking' : t('readAloud')}
                           >
-                            <Volume2 className="h-3.5 w-3.5" />
+                            {speakingMessageId === message.id ? (
+                              <Square className="h-3.5 w-3.5 fill-current" />
+                            ) : (
+                              <Volume2 className="h-3.5 w-3.5" />
+                            )}
                           </Button>
                           <Button
                             variant="ghost"

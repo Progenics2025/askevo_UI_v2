@@ -22,8 +22,13 @@
 **Issue:** The Voice Conversation feature was using hardcoded demo data.
 **Fix:** Replaced with real `SpeechRecognition` and `ollamaService` integration.
 
+## 5. Sidebar Behavior (Desktop vs Mobile)
+**Issue:** The floating sidebar was overlaying content on desktop, which is not desired for larger screens.
+**Fix:** Updated `Dashboard.jsx` to make the sidebar **static (relative)** on desktop (`md` breakpoint and up), pushing the content, while keeping it **floating (fixed)** on mobile devices.
+
 ## Verification
 1. **Logo:** Refresh login page to see the logo.
-2. **Speech:** If speech fails, check the toast message. If it says "Network error... AdBlocker", disable your ad blocker for this site.
+2. **Speech:** If speech fails, check the toast message.
 3. **NFC:** Tap card -> Enter OTP -> Verify -> Redirect to Chat.
-4. **Voice Mode:** Speak a query. If TTS fails (no sound), check the console for "ResponsiveVoice blocked" warning.
+4. **Voice Mode:** Speak a query.
+5. **Sidebar:** Resize window. On desktop, sidebar should push content. On mobile, it should overlay.

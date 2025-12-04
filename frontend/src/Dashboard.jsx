@@ -141,8 +141,11 @@ export default function Dashboard({ user, onLogout }) {
     <div className="flex h-screen bg-slate-50 relative overflow-hidden">
       {/* Overlay Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        className={`fixed inset-y-0 left-0 z-50 h-full transform transition-all duration-300 ease-in-out 
+          md:relative md:translate-x-0 
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${isSidebarOpen ? 'md:w-80' : 'md:w-0 md:overflow-hidden'}
+        `}
       >
         <Sidebar
           activeSection={activeSection}

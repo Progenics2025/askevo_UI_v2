@@ -6,6 +6,9 @@ const auth = require('../middleware/auth');
 // Save Pedigree
 router.post('/save', auth, async (req, res) => {
     try {
+        console.log('Save Pedigree Request:', req.body);
+        console.log('User:', req.user);
+
         const { case_number, data } = req.body;
         const user_id = req.user.id;
 
@@ -36,7 +39,8 @@ router.post('/save', auth, async (req, res) => {
         }
     } catch (error) {
         console.error('Save pedigree error:', error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error details:', error.message, error.sqlMessage);
+        res.status(500).json({ message: 'Server error: ' + error.message });
     }
 });
 

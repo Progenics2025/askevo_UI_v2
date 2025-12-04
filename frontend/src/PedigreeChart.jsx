@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -645,6 +645,9 @@ export default function PedigreeChart() {
             <DialogTitle className="text-xl font-bold" style={{ fontFamily: 'Bricolage Grotesque' }}>
               {editingMember ? 'Edit Member' : 'Add Family Member'}
             </DialogTitle>
+            <DialogDescription>
+              Enter the details of the family member.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
@@ -892,6 +895,9 @@ export default function PedigreeChart() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold font-bricolage">Save Pedigree Chart</DialogTitle>
+            <DialogDescription>
+              Enter a unique case number to save this pedigree chart.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
@@ -922,6 +928,9 @@ export default function PedigreeChart() {
             <DialogTitle className="text-2xl font-bold" style={{ fontFamily: 'Bricolage Grotesque' }}>
               Family History Interview
             </DialogTitle>
+            <DialogDescription>
+              Answer questions to generate the pedigree chart automatically.
+            </DialogDescription>
           </DialogHeader>
 
           <Tabs value={interviewMode} onValueChange={setInterviewMode} className="pt-4">

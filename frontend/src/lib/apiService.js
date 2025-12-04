@@ -157,11 +157,11 @@ class ApiService {
         return data;
     }
 
-    async register(username, email, password) {
+    async register(username, email, password, firstName, lastName) {
         const response = await fetch(`${this.getApiUrl()}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
+            body: JSON.stringify({ username, email, password, first_name: firstName, last_name: lastName })
         });
 
         if (!response.ok) {
@@ -170,15 +170,19 @@ class ApiService {
         }
 
         const data = await response.json();
-        this.setToken(data.token);
+        // Registration usually doesn't return a token immediately unless auto-login is desired
+        // But if it does, set it.
+        if (data.token) {
+            this.setToken(data.token);
+        }
         return data;
     }
 
-    async sendOtp(email) {
+    async sendOtp(email, type = 'login') {
         const response = await fetch(`${this.getApiUrl()}/auth/send-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email, type })
         });
 
         if (!response.ok) {

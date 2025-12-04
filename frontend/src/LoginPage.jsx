@@ -8,8 +8,12 @@ import { Eye, EyeOff, Dna, Mail } from 'lucide-react';
 import { apiService } from './lib/apiService';
 
 export default function LoginPage({ onLogin }) {
+  const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -18,27 +22,46 @@ export default function LoginPage({ onLogin }) {
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
-    if (email && password) {
-      if (!otpVerified) {
-        toast.error('Please verify OTP to continue');
-        return;
-      }
-      setIsLoading(true);
-      try {
+
+    if (!email || !password) {
+      toast.error('Please enter email and password');
+      return;
+    }
+
+    if (isRegistering && (!username || !firstName || !lastName)) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (!otpVerified) {
+      toast.error('Please verify OTP to continue');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (isRegistering) {
+        // Register first
+        await apiService.register(username, email, password, firstName, lastName);
+        toast.success('Registration successful! Logging in...');
+
+        // Then login
         const data = await apiService.login(email, password);
-        // Token is automatically saved by apiService
+        onLogin(email);
+        toast.success(`Welcome, ${data.user.username}!`);
+      } else {
+        // Login
+        const data = await apiService.login(email, password);
         onLogin(email);
         toast.success(`Welcome back, ${data.user.username}!`);
-      } catch (error) {
-        console.error('Login failed:', error);
-        toast.error(error.message || 'Failed to login. Please check your credentials.');
-      } finally {
-        setIsLoading(false);
       }
-    } else {
-      toast.error('Please enter email and password');
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      toast.error(error.message || 'Authentication failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,18 +73,13 @@ export default function LoginPage({ onLogin }) {
     }
     setOtpLoading(true);
     try {
-      // Call API to send OTP
-      const response = await apiService.sendOtp(email);
+      // Call API to send OTP with type
+      const type = isRegistering ? 'register' : 'login';
+      const response = await apiService.sendOtp(email, type);
       setOtpSent(true);
       setOtpVerified(false);
 
-      if (response.otp) {
-        setOtp(response.otp);
-        toast.success(`OTP sent! Your code is: ${response.otp}`);
-      } else {
-        setOtp('');
-        toast.success('OTP sent to your email');
-      }
+      toast.success('OTP sent to your email');
     } catch (error) {
       console.error('Failed to send OTP:', error);
       toast.error(error.message || 'Failed to send OTP');
@@ -100,51 +118,28 @@ export default function LoginPage({ onLogin }) {
     }
   };
 
+  const toggleMode = () => {
+    setIsRegistering(!isRegistering);
+    setOtpSent(false);
+    setOtpVerified(false);
+    setOtp('');
+    // Keep email if entered
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden p-4">
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 via-violet-50 to-fuchsia-50"></div>
 
       {/* Floating DNA Strands */}
-      {/* Top Left */}
       <div className="absolute top-20 left-20 opacity-30 animate-float">
         <Dna className="h-32 w-32 text-cyan-400" />
       </div>
-      {/* Bottom Right */}
       <div className="absolute bottom-20 right-20 opacity-30 animate-float" style={{ animationDelay: '1s' }}>
         <Dna className="h-24 w-24 text-violet-400" />
       </div>
-      {/* Top Right Large */}
       <div className="absolute top-1/2 right-40 opacity-20 animate-float" style={{ animationDelay: '2s' }}>
         <Dna className="h-40 w-40 text-fuchsia-400" />
-      </div>
-      {/* Left Middle */}
-      <div className="absolute left-10 top-1/3 opacity-25 animate-float" style={{ animationDelay: '0.5s' }}>
-        <Dna className="h-28 w-28 text-blue-400" />
-      </div>
-      {/* Right Upper */}
-      <div className="absolute right-10 top-1/4 opacity-25 animate-float" style={{ animationDelay: '1.5s' }}>
-        <Dna className="h-20 w-20 text-purple-400" />
-      </div>
-      {/* Bottom Left */}
-      <div className="absolute bottom-10 left-1/4 opacity-25 animate-float" style={{ animationDelay: '2.5s' }}>
-        <Dna className="h-24 w-24 text-pink-400" />
-      </div>
-      {/* Center Top */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 opacity-20 animate-float" style={{ animationDelay: '3s' }}>
-        <Dna className="h-36 w-36 text-cyan-300" />
-      </div>
-      {/* Bottom Right Secondary */}
-      <div className="absolute bottom-1/4 right-1/4 opacity-22 animate-float" style={{ animationDelay: '1.2s' }}>
-        <Dna className="h-20 w-20 text-violet-500" />
-      </div>
-      {/* Top Left Secondary */}
-      <div className="absolute top-1/3 left-1/3 opacity-22 animate-float" style={{ animationDelay: '3.5s' }}>
-        <Dna className="h-16 w-16 text-fuchsia-500" />
-      </div>
-      {/* Far Right Bottom */}
-      <div className="absolute bottom-1/3 right-5 opacity-20 animate-float" style={{ animationDelay: '2.2s' }}>
-        <Dna className="h-28 w-28 text-cyan-500" />
       </div>
 
       <div className="w-full max-w-md relative z-10 animate-fade-in">
@@ -172,17 +167,58 @@ export default function LoginPage({ onLogin }) {
         <Card className="border-0 shadow-2xl glass">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">
-              {showForgotPassword ? 'Reset Password' : 'Welcome Back'}
+              {showForgotPassword ? 'Reset Password' : (isRegistering ? 'Create Account' : 'Welcome Back')}
             </CardTitle>
             <CardDescription>
               {showForgotPassword
                 ? 'Enter your email to receive a password reset link'
-                : 'Enter your credentials and verify OTP to access askEVO'}
+                : (isRegistering
+                  ? 'Sign up to access askEVO genomics platform'
+                  : 'Enter your credentials and verify OTP to access askEVO')}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={showForgotPassword ? handleForgotPassword : handleLogin}>
+            <form onSubmit={showForgotPassword ? handleForgotPassword : handleAuth}>
               <div className="space-y-4">
+
+                {/* Registration Fields */}
+                {isRegistering && !showForgotPassword && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="font-semibold">First Name</Label>
+                        <Input
+                          id="firstName"
+                          placeholder="John"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          className="h-12 border-2 focus:border-cyan-500 transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="font-semibold">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          placeholder="Doe"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          className="h-12 border-2 focus:border-cyan-500 transition-colors"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="username" className="font-semibold">Username</Label>
+                      <Input
+                        id="username"
+                        placeholder="johndoe"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="h-12 border-2 focus:border-cyan-500 transition-colors"
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="email" className="font-semibold">Email</Label>
                   <Input
@@ -277,7 +313,7 @@ export default function LoginPage({ onLogin }) {
                   </div>
                 )}
 
-                {!showForgotPassword && (
+                {!showForgotPassword && !isRegistering && (
                   <div className="flex items-center justify-end">
                     <button
                       type="button"
@@ -292,12 +328,29 @@ export default function LoginPage({ onLogin }) {
 
                 <Button
                   type="submit"
-                  disabled={isLoading || !otpVerified}
+                  disabled={isLoading || (!showForgotPassword && !otpVerified)}
                   className="w-full h-12 bg-gradient-to-r from-cyan-500 via-violet-500 to-fuchsia-500 hover:from-cyan-600 hover:via-violet-600 hover:to-fuchsia-600 text-white font-bold shadow-xl text-base transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="login-submit-button"
                 >
-                  {isLoading ? 'Signing in...' : (showForgotPassword ? 'Send Reset Link' : 'Sign In')}
+                  {isLoading
+                    ? (isRegistering ? 'Creating Account...' : 'Signing in...')
+                    : (showForgotPassword ? 'Send Reset Link' : (isRegistering ? 'Create Account' : 'Sign In'))}
                 </Button>
+
+                {!showForgotPassword && (
+                  <div className="text-center mt-4">
+                    <p className="text-sm text-slate-600">
+                      {isRegistering ? "Already have an account?" : "Don't have an account?"}
+                      <button
+                        type="button"
+                        onClick={toggleMode}
+                        className="ml-1 font-bold text-transparent bg-gradient-to-r from-cyan-600 to-violet-600 bg-clip-text hover:underline"
+                      >
+                        {isRegistering ? 'Sign In' : 'Sign Up'}
+                      </button>
+                    </p>
+                  </div>
+                )}
 
                 {showForgotPassword && (
                   <Button

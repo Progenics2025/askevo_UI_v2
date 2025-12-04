@@ -3,6 +3,18 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
+const nodemailer = require('nodemailer');
+
+// Configure Nodemailer
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+    }
+});
 
 // Register
 router.post('/register', async (req, res) => {
@@ -80,12 +92,20 @@ const otpStore = new Map();
 // Send OTP
 router.post('/send-otp', async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, type } = req.body; // type: 'login' or 'register'
 
-        // Check if user exists
+        // Check user existence based on type
         const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-        if (users.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
+
+        if (type === 'register') {
+            if (users.length > 0) {
+                return res.status(400).json({ message: 'Email already registered' });
+            }
+        } else {
+            // Default to login check
+            if (users.length === 0) {
+                return res.status(404).json({ message: 'User not found' });
+            }
         }
 
         // Generate OTP
@@ -97,16 +117,30 @@ router.post('/send-otp', async (req, res) => {
             expires: Date.now() + 5 * 60 * 1000
         });
 
-        // In a real app, send email here. For demo, log to console.
-        console.log(`==================================================`);
-        console.log(`OTP for ${email}: ${otp}`);
-        console.log(`==================================================`);
+        // Send Email
+        const mailOptions = {
+            from: process.env.SMTP_FROM || process.env.SMTP_USER,
+            to: email,
+            subject: 'Your askEVO Verification Code',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2 style="color: #0891b2;">askEVO Verification</h2>
+                    <p>Your verification code is:</p>
+                    <h1 style="font-size: 32px; letter-spacing: 5px; color: #7c3aed;">${otp}</h1>
+                    <p>This code will expire in 5 minutes.</p>
+                    <p>If you did not request this code, please ignore this email.</p>
+                </div>
+            `
+        };
 
-        // FOR DEMO ONLY: Return OTP in response so user can login easily
-        res.json({ message: 'OTP sent successfully', otp: otp });
+        await transporter.sendMail(mailOptions);
+
+        console.log(`OTP sent to ${email}`);
+
+        res.json({ message: 'OTP sent to your email' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Send OTP Error:', error);
+        res.status(500).json({ message: 'Failed to send OTP. Please check email configuration.' });
     }
 });
 
@@ -131,7 +165,8 @@ router.post('/verify-otp', async (req, res) => {
         }
 
         // OTP verified
-        otpStore.delete(email); // Optional: clear after use
+        otpStore.delete(email);
+
         res.json({ message: 'OTP verified successfully' });
     } catch (error) {
         console.error(error);

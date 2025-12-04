@@ -19,7 +19,17 @@ const transporter = nodemailer.createTransport({
 // Register
 router.post('/register', async (req, res) => {
     try {
-        const { username, email, password, first_name, last_name } = req.body;
+        const {
+            username,
+            email,
+            password,
+            first_name,
+            last_name,
+            profession,
+            organization,
+            phone_number,
+            primary_use_case
+        } = req.body;
 
         // Check if user exists
         const [existing] = await pool.query('SELECT * FROM users WHERE email = ? OR username = ?', [email, username]);
@@ -33,8 +43,8 @@ router.post('/register', async (req, res) => {
 
         // Insert user
         const [result] = await pool.query(
-            'INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES (?, ?, ?, ?, ?)',
-            [username, email, password_hash, first_name, last_name]
+            'INSERT INTO users (username, email, password_hash, first_name, last_name, profession, organization, phone_number, primary_use_case) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [username, email, password_hash, first_name, last_name, profession, organization, phone_number, primary_use_case]
         );
 
         res.status(201).json({ message: 'User registered successfully', user_id: result.insertId });

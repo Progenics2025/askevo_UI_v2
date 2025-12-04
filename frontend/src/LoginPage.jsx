@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Dna, Mail } from 'lucide-react';
@@ -14,6 +15,11 @@ export default function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [profession, setProfession] = useState('');
+  const [organization, setOrganization] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [primaryUseCase, setPrimaryUseCase] = useState('');
+
   const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -30,9 +36,15 @@ export default function LoginPage({ onLogin }) {
       return;
     }
 
-    if (isRegistering && (!username || !firstName || !lastName)) {
-      toast.error('Please fill in all fields');
-      return;
+    if (isRegistering) {
+      if (!username || !firstName || !lastName || !profession || !organization || !phoneNumber) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+      if (phoneNumber.length < 10) {
+        toast.error('Phone number must be at least 10 digits');
+        return;
+      }
     }
 
     if (!otpVerified) {
@@ -44,7 +56,19 @@ export default function LoginPage({ onLogin }) {
     try {
       if (isRegistering) {
         // Register first
-        await apiService.register(username, email, password, firstName, lastName);
+        const userData = {
+          username,
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName,
+          profession,
+          organization,
+          phone_number: phoneNumber,
+          primary_use_case: primaryUseCase
+        };
+
+        await apiService.register(userData);
         toast.success('Registration successful! Logging in...');
 
         // Then login
@@ -75,7 +99,7 @@ export default function LoginPage({ onLogin }) {
     try {
       // Call API to send OTP with type
       const type = isRegistering ? 'register' : 'login';
-      const response = await apiService.sendOtp(email, type);
+      await apiService.sendOtp(email, type);
       setOtpSent(true);
       setOtpVerified(false);
 
@@ -192,7 +216,7 @@ export default function LoginPage({ onLogin }) {
                           placeholder="John"
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
-                          className="h-12 border-2 focus:border-cyan-500 transition-colors"
+                          className="h-10 border-2 focus:border-cyan-500 transition-colors"
                         />
                       </div>
                       <div className="space-y-2">
@@ -202,10 +226,49 @@ export default function LoginPage({ onLogin }) {
                           placeholder="Doe"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
-                          className="h-12 border-2 focus:border-cyan-500 transition-colors"
+                          className="h-10 border-2 focus:border-cyan-500 transition-colors"
                         />
                       </div>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="profession" className="font-semibold">Profession</Label>
+                      <Select value={profession} onValueChange={setProfession}>
+                        <SelectTrigger className="h-10 border-2 focus:border-cyan-500">
+                          <SelectValue placeholder="Select your profession" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="doctor">Doctor / Clinician</SelectItem>
+                          <SelectItem value="genetic_counselor">Genetic Counselor</SelectItem>
+                          <SelectItem value="researcher">Researcher</SelectItem>
+                          <SelectItem value="student">Student</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="organization" className="font-semibold">Organization/Institution</Label>
+                      <Input
+                        id="organization"
+                        placeholder="Hospital, University, etc."
+                        value={organization}
+                        onChange={(e) => setOrganization(e.target.value)}
+                        className="h-10 border-2 focus:border-cyan-500 transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneNumber" className="font-semibold">Phone Number</Label>
+                      <Input
+                        id="phoneNumber"
+                        placeholder="+1 234 567 8900"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        className="h-10 border-2 focus:border-cyan-500 transition-colors"
+                      />
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="username" className="font-semibold">Username</Label>
                       <Input
@@ -213,18 +276,29 @@ export default function LoginPage({ onLogin }) {
                         placeholder="johndoe"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        className="h-12 border-2 focus:border-cyan-500 transition-colors"
+                        className="h-10 border-2 focus:border-cyan-500 transition-colors"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="primaryUseCase" className="font-semibold">Primary Use Case (Optional)</Label>
+                      <Input
+                        id="primaryUseCase"
+                        placeholder="Clinical diagnosis, research, etc."
+                        value={primaryUseCase}
+                        onChange={(e) => setPrimaryUseCase(e.target.value)}
+                        className="h-10 border-2 focus:border-cyan-500 transition-colors"
                       />
                     </div>
                   </>
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="font-semibold">Email</Label>
+                  <Label htmlFor="email" className="font-semibold">Professional Email</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder="you@institution.org"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     data-testid="login-email-input"

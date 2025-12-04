@@ -157,11 +157,11 @@ class ApiService {
         return data;
     }
 
-    async register(username, email, password, firstName, lastName) {
+    async register(userData) {
         const response = await fetch(`${this.getApiUrl()}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password, first_name: firstName, last_name: lastName })
+            body: JSON.stringify(userData)
         });
 
         if (!response.ok) {
@@ -170,8 +170,6 @@ class ApiService {
         }
 
         const data = await response.json();
-        // Registration usually doesn't return a token immediately unless auto-login is desired
-        // But if it does, set it.
         if (data.token) {
             this.setToken(data.token);
         }

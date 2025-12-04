@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, User, Trash2, GitBranch, MessageSquare, Send, ChevronDown, ChevronUp, Save, BookOpen, X } from 'lucide-react';
+import { Plus, User, Trash2, GitBranch, MessageSquare, Send, ChevronDown, ChevronUp, Save, BookOpen, X, FolderOpen, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import PedigreeVisualization from '@/components/PedigreeVisualization';
 import { apiService } from '@/lib/apiService';
@@ -55,6 +55,8 @@ export default function PedigreeChart() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [savedCases, setSavedCases] = useState([]);
   const [editingMember, setEditingMember] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -191,6 +193,30 @@ export default function PedigreeChart() {
     } catch (error) {
       console.error(error);
       toast.error(error.message || 'Failed to save pedigree');
+    }
+  };
+
+  const handleOpenLoadDialog = async () => {
+    try {
+      const cases = await apiService.listPedigrees();
+      setSavedCases(cases);
+      setLoadDialogOpen(true);
+    } catch (error) {
+      toast.error('Failed to load saved cases');
+    }
+  };
+
+  const handleLoadCase = async (caseNum) => {
+    try {
+      const pedigree = await apiService.getPedigree(caseNum);
+      if (pedigree && pedigree.data) {
+        setMembers(pedigree.data);
+        setCaseNumber(pedigree.case_number);
+        setLoadDialogOpen(false);
+        toast.success(`Loaded case ${pedigree.case_number}`);
+      }
+    } catch (error) {
+      toast.error('Failed to load pedigree data');
     }
   };
 
@@ -398,6 +424,13 @@ export default function PedigreeChart() {
             >
               <Save className="mr-2 h-5 w-5" />
               Save
+            </Button>
+            <Button
+              onClick={handleOpenLoadDialog}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg transition-all hover:scale-105"
+            >
+              <FolderOpen className="mr-2 h-5 w-5" />
+              Load
             </Button>
             <Button
               onClick={startInterview}
@@ -918,6 +951,40 @@ export default function PedigreeChart() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Load Dialog */}
+      <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold font-bricolage">Load Saved Case</DialogTitle>
+            <DialogDescription>Select a previously saved pedigree chart to load.</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[300px] pr-4">
+            <div className="space-y-3 pt-2">
+              {savedCases.length === 0 ? (
+                <p className="text-center text-slate-500 py-8">No saved cases found.</p>
+              ) : (
+                savedCases.map((c) => (
+                  <div
+                    key={c.id}
+                    onClick={() => handleLoadCase(c.case_number)}
+                    className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer transition-all group"
+                  >
+                    <div>
+                      <p className="font-bold text-slate-800 group-hover:text-emerald-700">{c.case_number}</p>
+                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{new Date(c.updated_at).toLocaleDateString()} {new Date(c.updated_at).toLocaleTimeString()}</span>
+                      </div>
+                    </div>
+                    <FolderOpen className="h-5 w-5 text-slate-400 group-hover:text-emerald-500" />
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 

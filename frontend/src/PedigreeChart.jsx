@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, User, Trash2, GitBranch, MessageSquare, Send } from 'lucide-react';
+import { Plus, User, Trash2, GitBranch, MessageSquare, Send, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import PedigreeVisualization from '@/components/PedigreeVisualization';
 
@@ -22,6 +22,7 @@ export default function PedigreeChart() {
       affected: false,
       carrier: false,
       deceased: false,
+      proband: true,
       mother_id: '2',
       father_id: '3',
       spouse_id: null,
@@ -53,6 +54,8 @@ export default function PedigreeChart() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     generation: 1,
@@ -60,9 +63,16 @@ export default function PedigreeChart() {
     affected: false,
     carrier: false,
     deceased: false,
+    proband: false,
+    adopted: false,
+    life_status: 'alive', // alive, deceased, pregnancy, miscarriage, stillbirth
     mother_id: '',
     father_id: '',
     spouse_id: '',
+    twin_id: '',
+    twin_type: 'none', // none, identical, fraternal
+    consanguineous: false,
+    carrier_genes: '',
   });
 
   // Interview state
@@ -85,6 +95,7 @@ export default function PedigreeChart() {
 
   const handleAddMember = () => {
     setEditingMember(null);
+    setShowAdvanced(false);
     setFormData({
       name: '',
       generation: 1,
@@ -92,20 +103,32 @@ export default function PedigreeChart() {
       affected: false,
       carrier: false,
       deceased: false,
+      proband: false,
+      adopted: false,
+      life_status: 'alive',
       mother_id: '',
       father_id: '',
       spouse_id: '',
+      twin_id: '',
+      twin_type: 'none',
+      consanguineous: false,
+      carrier_genes: '',
     });
     setDialogOpen(true);
   };
 
   const handleEditMember = (member) => {
     setEditingMember(member.id);
+    setShowAdvanced(false);
     setFormData({
       ...member,
       mother_id: member.mother_id || '',
       father_id: member.father_id || '',
       spouse_id: member.spouse_id || '',
+      life_status: member.deceased ? 'deceased' : (member.pregnancy ? 'pregnancy' : (member.miscarriage ? 'miscarriage' : (member.stillbirth ? 'stillbirth' : 'alive'))),
+      twin_id: member.twin_id || '',
+      twin_type: member.twin_type || 'none',
+      carrier_genes: member.carrier_for ? member.carrier_for.join(', ') : '',
     });
     setDialogOpen(true);
   };
@@ -121,6 +144,12 @@ export default function PedigreeChart() {
       mother_id: formData.mother_id || null,
       father_id: formData.father_id || null,
       spouse_id: formData.spouse_id || null,
+      twin_id: formData.twin_id || null,
+      deceased: formData.life_status === 'deceased',
+      pregnancy: formData.life_status === 'pregnancy',
+      miscarriage: formData.life_status === 'miscarriage',
+      stillbirth: formData.life_status === 'stillbirth',
+      carrier_for: formData.carrier_genes ? formData.carrier_genes.split(',').map(s => s.trim()) : [],
     };
 
     if (editingMember) {
@@ -232,6 +261,7 @@ export default function PedigreeChart() {
         affected: lowerText.includes('patient has') || lowerText.includes('affected'),
         carrier: false,
         deceased: false,
+        proband: true,
         mother_id: '2',
         father_id: '3',
         spouse_id: null,
@@ -500,7 +530,7 @@ export default function PedigreeChart() {
 
       {/* Add/Edit Member Dialog */}
       < Dialog open={dialogOpen} onOpenChange={setDialogOpen} >
-        <DialogContent className="max-w-md" data-testid="member-dialog">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="member-dialog">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold" style={{ fontFamily: 'Bricolage Grotesque' }}>
               {editingMember ? 'Edit Member' : 'Add Family Member'}
@@ -560,7 +590,7 @@ export default function PedigreeChart() {
 
             {/* Relationships */}
             <div className="space-y-2">
-              <Label className="font-semibold">Relationships (Optional IDs)</Label>
+              <Label className="font-semibold">Relationships (IDs)</Label>
               <div className="grid grid-cols-3 gap-2">
                 <Input
                   placeholder="Mother ID"
@@ -584,9 +614,9 @@ export default function PedigreeChart() {
             </div>
 
             <div className="space-y-3">
-              <Label className="font-semibold">Status</Label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
+              <Label className="font-semibold">Clinical Status</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors border border-slate-100">
                   <input
                     type="checkbox"
                     checked={!formData.affected && !formData.carrier}
@@ -595,41 +625,135 @@ export default function PedigreeChart() {
                         setFormData({ ...formData, affected: false, carrier: false });
                       }
                     }}
-                    className="w-5 h-5 rounded border-slate-300"
+                    className="w-4 h-4 rounded border-slate-300"
                   />
                   <span className="text-sm font-medium text-slate-700">Unaffected</span>
                 </label>
-                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors border border-slate-100">
                   <input
                     type="checkbox"
                     checked={formData.affected}
                     onChange={(e) => setFormData({ ...formData, affected: e.target.checked, carrier: false })}
-                    className="w-5 h-5 rounded border-slate-300"
-                    data-testid="member-affected-checkbox"
+                    className="w-4 h-4 rounded border-slate-300"
                   />
                   <span className="text-sm font-medium text-slate-700">Affected</span>
                 </label>
-                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors border border-slate-100">
                   <input
                     type="checkbox"
                     checked={formData.carrier}
                     onChange={(e) => setFormData({ ...formData, carrier: e.target.checked, affected: false })}
-                    className="w-5 h-5 rounded border-slate-300"
-                    data-testid="member-carrier-checkbox"
+                    className="w-4 h-4 rounded border-slate-300"
                   />
                   <span className="text-sm font-medium text-slate-700">Carrier</span>
                 </label>
-                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors border border-slate-100">
                   <input
                     type="checkbox"
-                    checked={formData.deceased}
-                    onChange={(e) => setFormData({ ...formData, deceased: e.target.checked })}
-                    className="w-5 h-5 rounded border-slate-300"
-                    data-testid="member-deceased-checkbox"
+                    checked={formData.proband}
+                    onChange={(e) => setFormData({ ...formData, proband: e.target.checked })}
+                    className="w-4 h-4 rounded border-slate-300"
                   />
-                  <span className="text-sm font-medium text-slate-700">Deceased</span>
+                  <span className="text-sm font-medium text-slate-700">Proband</span>
                 </label>
               </div>
+            </div>
+
+            {/* Advanced Options Toggle */}
+            <div className="pt-2">
+              <Button
+                variant="ghost"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="w-full flex items-center justify-between text-slate-600 hover:text-emerald-600 hover:bg-emerald-50"
+              >
+                <span className="font-semibold">Advanced Options</span>
+                {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+
+              {showAdvanced && (
+                <div className="space-y-4 pt-4 animate-fade-in">
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Life Status</Label>
+                    <Select
+                      value={formData.life_status}
+                      onValueChange={(value) => setFormData({ ...formData, life_status: value })}
+                    >
+                      <SelectTrigger className="border-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="alive">Alive</SelectItem>
+                        <SelectItem value="deceased">Deceased</SelectItem>
+                        <SelectItem value="pregnancy">Pregnancy (Current)</SelectItem>
+                        <SelectItem value="miscarriage">Miscarriage</SelectItem>
+                        <SelectItem value="stillbirth">Stillbirth</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="font-semibold">Twin Type</Label>
+                      <Select
+                        value={formData.twin_type}
+                        onValueChange={(value) => setFormData({ ...formData, twin_type: value })}
+                      >
+                        <SelectTrigger className="border-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="identical">Identical</SelectItem>
+                          <SelectItem value="fraternal">Fraternal</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-semibold">Twin ID</Label>
+                      <Input
+                        value={formData.twin_id}
+                        onChange={(e) => setFormData({ ...formData, twin_id: e.target.value })}
+                        placeholder="ID of twin"
+                        className="border-2"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.adopted}
+                        onChange={(e) => setFormData({ ...formData, adopted: e.target.checked })}
+                        className="w-4 h-4 rounded border-slate-300"
+                      />
+                      <span className="text-sm font-medium text-slate-700">Adopted</span>
+                    </label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.consanguineous}
+                        onChange={(e) => setFormData({ ...formData, consanguineous: e.target.checked })}
+                        className="w-4 h-4 rounded border-slate-300"
+                      />
+                      <span className="text-sm font-medium text-slate-700">Consanguineous Relationship (if spouse)</span>
+                    </label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Carrier Genes (comma separated)</Label>
+                    <Input
+                      value={formData.carrier_genes}
+                      onChange={(e) => setFormData({ ...formData, carrier_genes: e.target.value })}
+                      placeholder="e.g. BRCA1, CFTR"
+                      className="border-2"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-4">

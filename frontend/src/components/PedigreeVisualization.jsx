@@ -37,6 +37,7 @@ export default function PedigreeVisualization({ members }) {
                         id: `couple_${member.id}_${spouse.id}`,
                         partner1: member,
                         partner2: spouse,
+                        consanguineous: member.consanguineous || spouse.consanguineous
                     });
                     processedSpouses.add(member.id);
                     processedSpouses.add(spouse.id);
@@ -116,41 +117,95 @@ export default function PedigreeVisualization({ members }) {
         const size = CONFIG.PERSON_SIZE;
         const isSquare = member.gender === 'male';
 
+        // Status checks
+        const isPregnancy = member.pregnancy;
+        const isMiscarriage = member.miscarriage;
+        const isStillbirth = member.stillbirth;
+        const isDeceased = member.deceased;
+        const isAffected = member.affected;
+        const isCarrier = member.carrier;
+        const isAdopted = member.adopted;
+        const isProband = member.proband;
+
         // Colors
-        const fillColor = member.affected ? '#ef4444' : 'white';
-        const strokeColor = member.affected
+        const fillColor = isAffected || isStillbirth ? '#ef4444' : 'white';
+        const strokeColor = isAffected || isStillbirth
             ? '#dc2626'
             : (isSquare ? '#2563eb' : '#db2777');
 
+        // Stroke style for adoption
+        const strokeDasharray = isAdopted ? "5,5" : "none";
+
+        let symbol;
+
+        if (isPregnancy) {
+            // Diamond for pregnancy
+            symbol = (
+                <polygon
+                    points={`${x + size / 2},${y} ${x + size},${y + size / 2} ${x + size / 2},${y + size} ${x},${y + size / 2}`}
+                    fill="white"
+                    stroke={strokeColor}
+                    strokeWidth="3"
+                    strokeDasharray={strokeDasharray}
+                />
+            );
+        } else if (isMiscarriage) {
+            // Triangle or small circle. Using Triangle.
+            symbol = (
+                <polygon
+                    points={`${x + size / 2},${y} ${x + size},${y + size} ${x},${y + size}`}
+                    fill="white"
+                    stroke={strokeColor}
+                    strokeWidth="3"
+                    strokeDasharray={strokeDasharray}
+                />
+            );
+        } else if (isSquare) {
+            symbol = (
+                <rect
+                    x={x}
+                    y={y}
+                    width={size}
+                    height={size}
+                    fill={fillColor}
+                    stroke={strokeColor}
+                    strokeWidth="3"
+                    rx="6"
+                    strokeDasharray={strokeDasharray}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                />
+            );
+        } else {
+            symbol = (
+                <circle
+                    cx={x + size / 2}
+                    cy={y + size / 2}
+                    r={size / 2}
+                    fill={fillColor}
+                    stroke={strokeColor}
+                    strokeWidth="3"
+                    strokeDasharray={strokeDasharray}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                />
+            );
+        }
+
         return (
             <g key={member.id}>
-                {/* Main symbol */}
-                {isSquare ? (
-                    <rect
-                        x={x}
-                        y={y}
-                        width={size}
-                        height={size}
-                        fill={fillColor}
-                        stroke={strokeColor}
-                        strokeWidth="3"
-                        rx="6"
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                    />
-                ) : (
-                    <circle
-                        cx={x + size / 2}
-                        cy={y + size / 2}
-                        r={size / 2}
-                        fill={fillColor}
-                        stroke={strokeColor}
-                        strokeWidth="3"
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                    />
+                {/* Proband Arrow */}
+                {isProband && (
+                    <g transform={`translate(${x - 15}, ${y + size + 15}) rotate(-45)`}>
+                        <line x1="0" y1="0" x2="20" y2="0" stroke="black" strokeWidth="3" />
+                        <polygon points="20,0 15,-5 15,5" fill="black" />
+                        <text x="25" y="5" fontSize="12" fontWeight="bold">P</text>
+                    </g>
                 )}
 
+                {/* Main symbol */}
+                {symbol}
+
                 {/* Carrier indicator */}
-                {member.carrier && !member.affected && (
+                {isCarrier && !isAffected && !isPregnancy && !isMiscarriage && (
                     <>
                         {isSquare ? (
                             <rect
@@ -171,7 +226,7 @@ export default function PedigreeVisualization({ members }) {
                 )}
 
                 {/* Deceased line */}
-                {member.deceased && (
+                {isDeceased && !isStillbirth && !isMiscarriage && (
                     <line
                         x1={x}
                         y1={y}
@@ -180,6 +235,11 @@ export default function PedigreeVisualization({ members }) {
                         stroke="#334155"
                         strokeWidth="3"
                     />
+                )}
+
+                {/* Stillbirth SB text if needed, or just filled symbol handled above */}
+                {isStillbirth && (
+                    <text x={x + size / 2} y={y + size / 2 + 5} textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">SB</text>
                 )}
 
                 {/* Name */}
@@ -196,7 +256,7 @@ export default function PedigreeVisualization({ members }) {
                 </text>
 
                 {/* Age or status */}
-                {(member.age || member.affected || member.carrier) && (
+                {(member.age || isAffected || isCarrier || isPregnancy) && (
                     <text
                         x={x + size / 2}
                         y={y + size + 33}
@@ -205,7 +265,7 @@ export default function PedigreeVisualization({ members }) {
                         fontSize="11"
                         fontFamily="system-ui, -apple-system, sans-serif"
                     >
-                        {member.age ? `${member.age}y` : member.affected ? 'Affected' : member.carrier ? 'Carrier' : 'Unaffected'}
+                        {member.age ? `${member.age}y` : isAffected ? 'Affected' : isCarrier ? 'Carrier' : isPregnancy ? 'Pregnancy' : ''}
                     </text>
                 )}
             </g>
@@ -239,6 +299,19 @@ export default function PedigreeVisualization({ members }) {
                         className="marriage-line"
                     />
 
+                    {/* Consanguineous double line */}
+                    {couple.consanguineous && (
+                        <line
+                            x1={x1}
+                            y1={y - 6}
+                            x2={x2}
+                            y2={y - 6}
+                            stroke="#64748b"
+                            strokeWidth="3"
+                            className="marriage-line"
+                        />
+                    )}
+
                     {/* Midpoint for offspring connection */}
                     <circle
                         cx={midX}
@@ -262,7 +335,7 @@ export default function PedigreeVisualization({ members }) {
 
             if (!pos1 || !pos2) return;
 
-            const midX = (pos1.x + pos2.x + CONFIG.PERSON_SIZE) / 2; // Fixed calculation
+            const midX = (pos1.x + pos2.x + CONFIG.PERSON_SIZE) / 2;
             const parentY = pos1.y + CONFIG.PERSON_SIZE / 2;
 
             // Find children
@@ -317,6 +390,7 @@ export default function PedigreeVisualization({ members }) {
                 if (!childPos) return;
 
                 const childX = childPos.x + CONFIG.PERSON_SIZE / 2;
+                const isAdopted = child.adopted;
 
                 lines.push(
                     <line
@@ -327,12 +401,56 @@ export default function PedigreeVisualization({ members }) {
                         y2={childPos.y}
                         stroke="#64748b"
                         strokeWidth="3"
+                        strokeDasharray={isAdopted ? "5,5" : "none"}
                     />
                 );
+
+                // Twin connection
+                if (child.twin_id) {
+                    const twin = members.find(m => m.id === child.twin_id);
+                    if (twin) {
+                        const twinPos = layout.positions.get(twin.id);
+                        if (twinPos) {
+                            const twinX = twinPos.x + CONFIG.PERSON_SIZE / 2;
+                            // Draw connection bar between twins at midpoint of vertical line
+                            const twinY = dropY + (childPos.y - dropY) / 2;
+
+                            // Only draw once (e.g., if child.id < twin.id)
+                            if (child.id < twin.id) {
+                                lines.push(
+                                    <line
+                                        key={`twin-${child.id}-${twin.id}`}
+                                        x1={childX}
+                                        y1={twinY}
+                                        x2={twinX}
+                                        y2={twinY}
+                                        stroke="#64748b"
+                                        strokeWidth="3"
+                                    />
+                                );
+
+                                // Identical twin indicator (double line)
+                                if (child.twin_type === 'identical') {
+                                    lines.push(
+                                        <line
+                                            key={`twin-identical-${child.id}-${twin.id}`}
+                                            x1={childX}
+                                            y1={twinY + 5}
+                                            x2={twinX}
+                                            y2={twinY + 5}
+                                            stroke="#64748b"
+                                            strokeWidth="3"
+                                        />
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
             });
         });
 
-        // Also handle single parents (if any member has mother_id or father_id but those parents aren't couples)
+        // Also handle single parents
         members.forEach(member => {
             if (!member.mother_id && !member.father_id) return;
 
@@ -341,9 +459,8 @@ export default function PedigreeVisualization({ members }) {
                 (couple.partner2.id === member.mother_id || couple.partner2.id === member.father_id)
             );
 
-            if (isChildOfCouple) return; // Already handled above
+            if (isChildOfCouple) return;
 
-            // Draw connection to single parent
             const parentId = member.mother_id || member.father_id;
             const parentPos = layout.positions.get(parentId);
             const childPos = layout.positions.get(member.id);

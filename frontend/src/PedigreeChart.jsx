@@ -17,13 +17,38 @@ export default function PedigreeChart() {
     {
       id: '1',
       name: 'Proband',
-      generation: 1,
-      gender: 'male',
-      position: 1,
-      affected: true,
+      generation: 2,
+      gender: 'female',
+      affected: false,
       carrier: false,
       deceased: false,
+      mother_id: '2',
+      father_id: '3',
+      spouse_id: null,
+      children_ids: []
     },
+    {
+      id: '2',
+      name: 'Mother',
+      generation: 1,
+      gender: 'female',
+      affected: false,
+      carrier: true,
+      deceased: false,
+      spouse_id: '3',
+      children_ids: ['1']
+    },
+    {
+      id: '3',
+      name: 'Father',
+      generation: 1,
+      gender: 'male',
+      affected: false,
+      carrier: false,
+      deceased: false,
+      spouse_id: '2',
+      children_ids: ['1']
+    }
   ]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
@@ -32,10 +57,12 @@ export default function PedigreeChart() {
     name: '',
     generation: 1,
     gender: 'male',
-    position: 1,
     affected: false,
     carrier: false,
     deceased: false,
+    mother_id: '',
+    father_id: '',
+    spouse_id: '',
   });
 
   // Interview state
@@ -62,17 +89,24 @@ export default function PedigreeChart() {
       name: '',
       generation: 1,
       gender: 'male',
-      position: members.filter((m) => m.generation === 1).length + 1,
       affected: false,
       carrier: false,
       deceased: false,
+      mother_id: '',
+      father_id: '',
+      spouse_id: '',
     });
     setDialogOpen(true);
   };
 
   const handleEditMember = (member) => {
     setEditingMember(member.id);
-    setFormData(member);
+    setFormData({
+      ...member,
+      mother_id: member.mother_id || '',
+      father_id: member.father_id || '',
+      spouse_id: member.spouse_id || '',
+    });
     setDialogOpen(true);
   };
 
@@ -82,15 +116,23 @@ export default function PedigreeChart() {
       return;
     }
 
+    const memberData = {
+      ...formData,
+      mother_id: formData.mother_id || null,
+      father_id: formData.father_id || null,
+      spouse_id: formData.spouse_id || null,
+    };
+
     if (editingMember) {
       setMembers((prev) =>
-        prev.map((m) => (m.id === editingMember ? { ...formData, id: editingMember } : m))
+        prev.map((m) => (m.id === editingMember ? { ...memberData, id: editingMember } : m))
       );
       toast.success('Member updated');
     } else {
       const newMember = {
-        ...formData,
+        ...memberData,
         id: Date.now().toString(),
+        children_ids: [],
       };
       setMembers((prev) => [...prev, newMember]);
       toast.success('Member added');
@@ -126,13 +168,11 @@ export default function PedigreeChart() {
   const handlePatientAnswer = () => {
     if (!patientInput.trim()) return;
 
-    // Add user message
     setInterviewMessages(prev => [...prev, {
       type: 'user',
       text: patientInput
     }]);
 
-    // Move to next question
     const nextQuestion = currentQuestion + 1;
     if (nextQuestion < patientQuestions.length) {
       setTimeout(() => {
@@ -148,7 +188,7 @@ export default function PedigreeChart() {
           type: 'bot',
           text: "Thank you for providing this information! I'm now generating your family pedigree chart based on your responses."
         }]);
-        processInterviewData();
+        processInterviewData(patientInput); // In reality, we'd process all answers
       }, 500);
     }
 
@@ -172,47 +212,101 @@ export default function PedigreeChart() {
     }
     ]);
 
-    processInterviewData();
+    processInterviewData(doctorInput);
     setDoctorInput('');
   };
 
-  const processInterviewData = () => {
-    // Simulate processing and creating pedigree members
+  // Intelligent Extraction Logic
+  const processInterviewData = (text) => {
+    // This simulates the AI extraction logic described in the feedback
     setTimeout(() => {
-      const newMembers = [
-        {
-          id: Date.now().toString(),
-          name: 'Patient',
+      const lowerText = text.toLowerCase();
+      const newMembers = [];
+
+      // 1. Create Proband (Patient)
+      const proband = {
+        id: '1',
+        name: 'Patient',
+        generation: 2,
+        gender: lowerText.includes('female') || lowerText.includes('woman') ? 'female' : 'male',
+        affected: lowerText.includes('patient has') || lowerText.includes('affected'),
+        carrier: false,
+        deceased: false,
+        mother_id: '2',
+        father_id: '3',
+        spouse_id: null,
+        children_ids: []
+      };
+      newMembers.push(proband);
+
+      // 2. Create Mother
+      const mother = {
+        id: '2',
+        name: 'Mother',
+        generation: 1,
+        gender: 'female',
+        affected: lowerText.includes('mother has') || lowerText.includes('mother is affected'),
+        carrier: false,
+        deceased: lowerText.includes('mother is deceased'),
+        spouse_id: '3',
+        children_ids: ['1']
+      };
+      newMembers.push(mother);
+
+      // 3. Create Father
+      const father = {
+        id: '3',
+        name: 'Father',
+        generation: 1,
+        gender: 'male',
+        affected: lowerText.includes('father has') || lowerText.includes('father is affected'),
+        carrier: false,
+        deceased: lowerText.includes('father is deceased'),
+        spouse_id: '2',
+        children_ids: ['1']
+      };
+      newMembers.push(father);
+
+      // 4. Check for siblings
+      if (lowerText.includes('sister')) {
+        const sister = {
+          id: '4',
+          name: 'Sister',
           generation: 2,
           gender: 'female',
-          position: 1,
-          affected: false,
-          carrier: true,
-          deceased: false,
-        },
-        {
-          id: (Date.now() + 1).toString(),
-          name: 'Father',
-          generation: 1,
-          gender: 'male',
-          position: 1,
-          affected: true,
+          affected: lowerText.includes('sister has'),
           carrier: false,
           deceased: false,
-        },
-        {
-          id: (Date.now() + 2).toString(),
-          name: 'Mother',
-          generation: 1,
-          gender: 'female',
-          position: 2,
-          affected: false,
-          carrier: false,
-          deceased: false,
-        },
-      ];
+          mother_id: '2',
+          father_id: '3',
+          spouse_id: null,
+          children_ids: []
+        };
+        newMembers.push(sister);
+        mother.children_ids.push('4');
+        father.children_ids.push('4');
+      }
 
-      setMembers(prev => [...prev, ...newMembers]);
+      if (lowerText.includes('brother')) {
+        const brother = {
+          id: '5',
+          name: 'Brother',
+          generation: 2,
+          gender: 'male',
+          affected: lowerText.includes('brother has'),
+          carrier: false,
+          deceased: false,
+          mother_id: '2',
+          father_id: '3',
+          spouse_id: null,
+          children_ids: []
+        };
+        newMembers.push(brother);
+        mother.children_ids.push('5');
+        father.children_ids.push('5');
+      }
+
+      setMembers(newMembers);
       toast.success('Pedigree chart created successfully!');
 
       setTimeout(() => {
@@ -267,7 +361,7 @@ export default function PedigreeChart() {
           <Card className="mb-6 bg-white/80 backdrop-blur-sm shadow-lg border-2 border-emerald-100">
             <CardContent className="pt-6">
               <h3 className="text-sm font-bold text-slate-900 mb-4" style={{ fontFamily: 'Bricolage Grotesque' }}>Legend</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 border-3 border-blue-700 bg-blue-200 rounded shadow-sm" />
                   <span className="text-sm font-semibold text-slate-700">Male</span>
@@ -285,6 +379,10 @@ export default function PedigreeChart() {
                     <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 w-1/2" />
                   </div>
                   <span className="text-sm font-semibold text-slate-700">Carrier</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 border-3 border-slate-300 bg-white rounded shadow-sm" />
+                  <span className="text-sm font-semibold text-slate-700">Unaffected</span>
                 </div>
               </div>
             </CardContent>
@@ -320,10 +418,10 @@ export default function PedigreeChart() {
                     </div>
                   </div>
 
-                  {/* Original generation-based display for reference */}
+                  {/* List View */}
                   <div className="pt-6 border-t-2 border-emerald-100">
                     <h4 className="text-sm font-bold text-slate-900 mb-4" style={{ fontFamily: 'Bricolage Grotesque' }}>
-                      Family Members by Generation
+                      Family Members List
                     </h4>
                   </div>
                   {generations.map((gen) => {
@@ -340,10 +438,6 @@ export default function PedigreeChart() {
                               className="relative group"
                               data-testid={`member-${member.id}`}
                             >
-                              {gen < Math.max(...generations) && (
-                                <div className="absolute top-full left-1/2 w-0.5 h-8 bg-emerald-300" />
-                              )}
-
                               {/* Member Symbol */}
                               <div
                                 className={`relative w-20 h-20 border-3 cursor-pointer transition-all hover:scale-110 shadow-lg ${member.gender === 'male' ? 'rounded-lg' : 'rounded-full'
@@ -464,14 +558,52 @@ export default function PedigreeChart() {
               </div>
             </div>
 
+            {/* Relationships */}
+            <div className="space-y-2">
+              <Label className="font-semibold">Relationships (Optional IDs)</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <Input
+                  placeholder="Mother ID"
+                  value={formData.mother_id}
+                  onChange={(e) => setFormData({ ...formData, mother_id: e.target.value })}
+                  className="text-xs"
+                />
+                <Input
+                  placeholder="Father ID"
+                  value={formData.father_id}
+                  onChange={(e) => setFormData({ ...formData, father_id: e.target.value })}
+                  className="text-xs"
+                />
+                <Input
+                  placeholder="Spouse ID"
+                  value={formData.spouse_id}
+                  onChange={(e) => setFormData({ ...formData, spouse_id: e.target.value })}
+                  className="text-xs"
+                />
+              </div>
+            </div>
+
             <div className="space-y-3">
               <Label className="font-semibold">Status</Label>
               <div className="space-y-2">
                 <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
                   <input
                     type="checkbox"
+                    checked={!formData.affected && !formData.carrier}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({ ...formData, affected: false, carrier: false });
+                      }
+                    }}
+                    className="w-5 h-5 rounded border-slate-300"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Unaffected</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                  <input
+                    type="checkbox"
                     checked={formData.affected}
-                    onChange={(e) => setFormData({ ...formData, affected: e.target.checked })}
+                    onChange={(e) => setFormData({ ...formData, affected: e.target.checked, carrier: false })}
                     className="w-5 h-5 rounded border-slate-300"
                     data-testid="member-affected-checkbox"
                   />
@@ -481,7 +613,7 @@ export default function PedigreeChart() {
                   <input
                     type="checkbox"
                     checked={formData.carrier}
-                    onChange={(e) => setFormData({ ...formData, carrier: e.target.checked })}
+                    onChange={(e) => setFormData({ ...formData, carrier: e.target.checked, affected: false })}
                     className="w-5 h-5 rounded border-slate-300"
                     data-testid="member-carrier-checkbox"
                   />

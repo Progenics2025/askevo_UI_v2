@@ -618,20 +618,20 @@ export default function GenomicsChat({ chatId, chatName }) {
       </ScrollArea>
 
       {/* Input Area */}
-      <div className="bg-white/80 backdrop-blur-md border-t border-cyan-100 p-4 shadow-lg flex flex-col gap-2">
+      <div className="bg-white/80 backdrop-blur-md border-t border-cyan-100 p-3 md:p-4 shadow-lg flex flex-col gap-2 z-10">
         <div className="max-w-4xl mx-auto w-full">
           <div className="flex gap-2 md:gap-3 items-end">
             <div className="flex gap-1 md:gap-2">
               <Button
                 onClick={() => setVoiceModalOpen(true)}
-                className="h-10 w-10 md:h-14 md:w-14 bg-gradient-to-br from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white shadow-lg transition-all hover:scale-105"
+                className="h-10 w-10 md:h-12 md:w-12 bg-gradient-to-br from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white shadow-lg transition-all hover:scale-105"
                 data-testid="voice-conversation-button"
               >
                 <Volume2 className="h-5 w-5 md:h-6 md:w-6" />
               </Button>
               <Button
                 onClick={handleSpeechToText}
-                className={`h-10 w-10 md:h-14 md:w-14 text-white shadow-lg transition-all hover:scale-105 ${isListening
+                className={`h-10 w-10 md:h-12 md:w-12 text-white shadow-lg transition-all hover:scale-105 ${isListening
                   ? 'bg-gradient-to-br from-red-500 to-pink-500 animate-pulse'
                   : 'bg-gradient-to-br from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600'
                   }`}
@@ -641,7 +641,7 @@ export default function GenomicsChat({ chatId, chatName }) {
               </Button>
               <Button
                 onClick={() => setFileUploadModalOpen(true)}
-                className="h-10 w-10 md:h-14 md:w-14 bg-gradient-to-br from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg transition-all hover:scale-105"
+                className="h-10 w-10 md:h-12 md:w-12 bg-gradient-to-br from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg transition-all hover:scale-105"
                 data-testid="file-upload-button"
               >
                 <FileUp className="h-5 w-5 md:h-6 md:w-6" />
@@ -654,14 +654,14 @@ export default function GenomicsChat({ chatId, chatName }) {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyPress}
                 placeholder={t('inputPlaceholder')}
-                className="min-h-[40px] md:min-h-[56px] max-h-[200px] resize-none border-2 border-cyan-200 focus:border-cyan-400 transition-colors text-sm md:text-base"
+                className="min-h-[40px] md:min-h-[48px] max-h-[150px] resize-none border-2 border-cyan-200 focus:border-cyan-400 transition-colors text-sm md:text-base"
                 data-testid="chat-input-field"
               />
             </div>
             <Button
               onClick={() => handleSend()}
               disabled={!inputValue.trim()}
-              className="h-10 md:h-14 px-4 md:px-6 bg-gradient-to-r from-cyan-500 via-violet-500 to-fuchsia-500 hover:from-cyan-600 hover:via-violet-600 hover:to-fuchsia-600 text-white shadow-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-10 md:h-12 px-4 md:px-6 bg-gradient-to-r from-cyan-500 via-violet-500 to-fuchsia-500 hover:from-cyan-600 hover:via-violet-600 hover:to-fuchsia-600 text-white shadow-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="send-message-button"
             >
               <Send className="h-4 w-4 md:h-5 md:w-5" />
@@ -670,12 +670,12 @@ export default function GenomicsChat({ chatId, chatName }) {
         </div>
 
         {/* Connection Status - Bottom Right (Static) */}
-        <div className="flex justify-end px-2">
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium shadow-md transition-all ${ollamaConnected
+        <div className="flex justify-end px-2 mt-1">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium shadow-md transition-all ${ollamaConnected
             ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
             : 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
             }`}>
-            <div className={`w-2 h-2 rounded-full ${ollamaConnected ? 'bg-white animate-pulse' : 'bg-white/70'
+            <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${ollamaConnected ? 'bg-white animate-pulse' : 'bg-white/70'
               }`}></div>
             <span>
               {ollamaConnected

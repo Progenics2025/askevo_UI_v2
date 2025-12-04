@@ -184,4 +184,143 @@ router.post('/verify-otp', async (req, res) => {
     }
 });
 
+// NFC Login Step 1: Check Token & Send OTP
+router.post('/nfc-login', async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ message: 'Token required' });
+
+        const [users] = await pool.query('SELECT * FROM users WHERE nfc_token = ?', [token]);
+
+        // Case 1: Token not linked -> Require Registration
+        if (users.length === 0) {
+            return res.json({ status: 'REGISTER_REQUIRED', token });
+        }
+
+        // Case 2: Token linked -> Send OTP
+        const user = users[0];
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 5 * 60000); // 5 mins
+
+        await pool.query('UPDATE users SET otp_code = ?, otp_expires_at = ? WHERE id = ?', [otp, expiresAt, user.id]);
+
+        // Send Email
+        const mailOptions = {
+            from: process.env.SMTP_FROM || process.env.SMTP_USER,
+            to: user.email,
+            subject: 'Progenics AI - Login OTP',
+            text: `Your login OTP is: ${otp}. It expires in 5 minutes.`
+        };
+        await transporter.sendMail(mailOptions);
+
+        // Mask email for privacy
+        const maskedEmail = user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
+
+        res.json({
+            status: 'OTP_SENT',
+            email: maskedEmail,
+            message: `OTP sent to ${maskedEmail}`
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// NFC Login Step 2: Verify OTP
+router.post('/verify-nfc-otp', async (req, res) => {
+    try {
+        const { token, otp } = req.body;
+        const [users] = await pool.query('SELECT * FROM users WHERE nfc_token = ?', [token]);
+
+        if (users.length === 0) return res.status(401).json({ message: 'Invalid token' });
+        const user = users[0];
+
+        if (user.otp_code !== otp || new Date() > new Date(user.otp_expires_at)) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+
+        // Clear OTP
+        await pool.query('UPDATE users SET otp_code = NULL, otp_expires_at = NULL WHERE id = ?', [user.id]);
+
+        // Generate JWT
+        const jwtToken = jwt.sign(
+            { id: user.id, username: user.username, email: user.email, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRE }
+        );
+
+        res.json({
+            token: jwtToken,
+            user: { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name }
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// NFC Auto-Registration
+router.post('/register-nfc-user', async (req, res) => {
+    try {
+        const { name, email, phone, nfcToken } = req.body;
+
+        // Check if user exists
+        const [existing] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (existing.length > 0) {
+            return res.status(400).json({ message: 'Email already registered. Please link card instead.' });
+        }
+
+        // Auto-generate password
+        const crypto = require('crypto');
+        const rawPassword = crypto.randomBytes(8).toString('hex'); // 16 char password
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(rawPassword, salt);
+
+        // Create User
+        const [result] = await pool.query(
+            'INSERT INTO users (username, email, password_hash, first_name, phone_number, nfc_token) VALUES (?, ?, ?, ?, ?, ?)',
+            [email.split('@')[0], email, passwordHash, name, phone, nfcToken]
+        );
+
+        const userId = result.insertId;
+
+        // Send Email with Password
+        const mailOptions = {
+            from: process.env.SMTP_FROM || process.env.SMTP_USER,
+            to: email,
+            subject: 'Welcome to Progenics AI - Your Credentials',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2>Welcome to Progenics AI!</h2>
+                    <p>Your account has been created via NFC Registration.</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Password:</strong> ${rawPassword}</p>
+                    <p>Please change your password after logging in.</p>
+                </div>
+            `
+        };
+        await transporter.sendMail(mailOptions);
+
+        // Generate JWT
+        const jwtToken = jwt.sign(
+            { id: userId, username: email.split('@')[0], email: email, role: 'user' },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRE }
+        );
+
+        res.json({
+            token: jwtToken,
+            user: { id: userId, email: email, first_name: name },
+            message: 'Account created! Password sent to email.'
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 module.exports = router;

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import LoginPage from './LoginPage'
 import Dashboard from './Dashboard'
+import NFCLogin from './NFCLogin'
 import './App.css'
 
 export default function App() {
@@ -43,6 +44,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/nfc-login" element={<NFCLogin />} />
         <Route
           path="/"
           element={

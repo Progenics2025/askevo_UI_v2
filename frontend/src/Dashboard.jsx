@@ -3,7 +3,7 @@ import { PanelLeft } from 'lucide-react'
 import Sidebar from './Sidebar'
 import GenomicsChat from './GenomicsChat'
 import PedigreeChart from './PedigreeChart'
-import { apiService } from './lib/apiService'
+import { apiService } from '@/lib/apiService'
 
 export default function Dashboard({ user, onLogout }) {
   const [activeSection, setActiveSection] = useState('genomics')

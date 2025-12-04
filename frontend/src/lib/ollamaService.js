@@ -1,5 +1,5 @@
 // Ollama Service for streaming LLM responses
-const OLLAMA_DEFAULT_URL = '/api/ollama';
+const OLLAMA_DEFAULT_URL = 'https://ollama.progenicslabs.com';
 
 class OllamaService {
     constructor() {

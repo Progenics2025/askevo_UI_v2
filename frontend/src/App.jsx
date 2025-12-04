@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import LoginPage from './LoginPage'
 import Dashboard from './Dashboard'
 import NFCLogin from './NFCLogin'
+import { migrateOllamaUrl } from './lib/migrateOllamaUrl'
 import './App.css'
 
 export default function App() {
@@ -12,6 +13,9 @@ export default function App() {
 
   // Restore authentication state on mount
   useEffect(() => {
+    // Migrate Ollama URL from HTTP to HTTPS
+    migrateOllamaUrl();
+
     const savedUser = localStorage.getItem('user')
     if (savedUser) {
       try {

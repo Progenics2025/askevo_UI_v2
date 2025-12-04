@@ -13,7 +13,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
     const { t, i18n } = useTranslation();
     const [autoSpeak, setAutoSpeak] = useState(localStorage.getItem('autoSpeak') === 'true');
     const [ollamaUrl, setOllamaUrl] = useState(
-        localStorage.getItem('ollamaUrl') || '/api/ollama'
+        localStorage.getItem('ollamaUrl') || 'https://ollama.progenicslabs.com'
     );
     const [apiUrl, setApiUrl] = useState(
         localStorage.getItem('genomicsApiUrl') || '/api'
@@ -156,7 +156,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
                                     value={ollamaUrl}
                                     onChange={(e) => setOllamaUrl(e.target.value)}
                                     className="border-2 border-cyan-100 focus:border-cyan-400"
-                                    placeholder="http://localhost:11434"
+                                    placeholder="https://ollama.progenicslabs.com"
                                 />
                             </div>
                             <div className="space-y-1">

@@ -107,8 +107,13 @@ export default function NFCLogin() {
 
             if (response.ok) {
                 apiService.setToken(data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
                 toast.success(`Welcome back, ${data.user.first_name || 'User'}!`);
-                navigate('/chat');
+
+                // Redirect to home/chat with replace to avoid history issues
+                setTimeout(() => {
+                    window.location.replace('/');
+                }, 500);
             } else {
                 toast.error(data.message);
             }
@@ -129,9 +134,11 @@ export default function NFCLogin() {
 
             if (response.ok) {
                 apiService.setToken(data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
                 toast.success('Account created successfully!');
                 toast.info('Password sent to your email.');
-                navigate('/chat');
+                // Navigate to root and reload so App.jsx can detect auth state
+                window.location.href = '/';
             } else {
                 toast.error(data.message);
             }
@@ -152,6 +159,8 @@ export default function NFCLogin() {
                         <h2 className="text-xl font-semibold text-slate-800">Verifying NFC Card...</h2>
                     </div>
                 )}
+
+
 
                 {status === 'OTP_REQUIRED' && (
                     <form onSubmit={handleVerifyOTP} className="flex flex-col items-center">

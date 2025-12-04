@@ -6,34 +6,104 @@ import { toast } from 'sonner';
 import { ttsService } from './lib/tts';
 import { useTranslation } from 'react-i18next';
 
+import { ollamaService } from './lib/ollamaService';
+
 export default function VoiceConversationModal({ open, onOpenChange }) {
   const { t, i18n } = useTranslation();
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [conversation, setConversation] = useState([]);
+  const [recognition, setRecognition] = useState(null);
+
+  const processVoiceInput = async (text) => {
+    try {
+      // Add placeholder for AI response
+      setConversation(prev => [...prev, { type: 'ai', text: '...' }]);
+
+      const messages = [
+        { role: 'user', content: text }
+      ];
+
+      let fullResponse = '';
+
+      for await (const chunk of ollamaService.streamResponse(messages)) {
+        fullResponse += chunk;
+
+        setConversation(prev => {
+          const newConv = [...prev];
+          newConv[newConv.length - 1] = { type: 'ai', text: fullResponse };
+          return newConv;
+        });
+      }
+
+      await speakResponse(fullResponse);
+
+    } catch (error) {
+      console.error('AI Processing Error:', error);
+      toast.error('Failed to get AI response');
+      setConversation(prev => {
+        const newConv = [...prev];
+        newConv[newConv.length - 1] = { type: 'ai', text: 'Sorry, I encountered an error.' };
+        return newConv;
+      });
+    }
+  };
 
   const startListening = () => {
-    setIsListening(true);
-    toast.info(t('listening'));
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = i18n.language;
 
-    // Simulate listening
-    setTimeout(() => {
-      const sampleTranscript = "What can you tell me about BRCA1 gene mutations?";
-      setTranscript(sampleTranscript);
-      setConversation(prev => [...prev, { type: 'user', text: sampleTranscript }]);
-      setIsListening(false);
+      recognitionInstance.onstart = () => {
+        setIsListening(true);
+        toast.info(t('listening'));
+      };
 
-      // Simulate AI response
-      setTimeout(() => {
-        const aiResponse = "BRCA1 is a human tumor suppressor gene that produces a protein responsible for repairing damaged DNA. Mutations in this gene significantly increase the risk of breast and ovarian cancer.";
-        setConversation(prev => [...prev, { type: 'ai', text: aiResponse }]);
-        speakResponse(aiResponse);
-      }, 1000);
-    }, 3000);
+      recognitionInstance.onresult = async (event) => {
+        const transcriptText = event.results[0][0].transcript;
+        setTranscript(transcriptText);
+        setConversation(prev => [...prev, { type: 'user', text: transcriptText }]);
+        setIsListening(false);
+
+        await processVoiceInput(transcriptText);
+      };
+
+      recognitionInstance.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+
+        let errorMessage = t('speechError');
+        if (event.error === 'not-allowed') {
+          errorMessage = 'Microphone access denied';
+        } else if (event.error === 'no-speech') {
+          errorMessage = 'No speech detected';
+        } else if (event.error === 'network') {
+          errorMessage = 'Network error. Check AdBlocker/Brave Shields.';
+        } else if (event.error === 'service-not-allowed') {
+          errorMessage = 'Speech service not allowed.';
+        }
+        toast.error(errorMessage);
+      };
+
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionInstance.start();
+      setRecognition(recognitionInstance);
+    } else {
+      toast.error(t('speechNotSupported'));
+    }
   };
 
   const stopListening = () => {
+    if (recognition) {
+      recognition.stop();
+    }
     setIsListening(false);
     toast.success('Stopped listening');
   };
@@ -78,10 +148,10 @@ export default function VoiceConversationModal({ open, onOpenChange }) {
           <div className="flex flex-col items-center justify-center py-8 bg-gradient-to-br from-cyan-50 to-violet-50 rounded-2xl">
             <div
               className={`w-32 h-32 rounded-full flex items-center justify-center transition-all ${isListening
-                  ? 'bg-gradient-to-br from-cyan-500 to-violet-500 listening-pulse'
-                  : isSpeaking
-                    ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500 animate-pulse'
-                    : 'bg-gradient-to-br from-slate-300 to-slate-400'
+                ? 'bg-gradient-to-br from-cyan-500 to-violet-500 listening-pulse'
+                : isSpeaking
+                  ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500 animate-pulse'
+                  : 'bg-gradient-to-br from-slate-300 to-slate-400'
                 }`}
             >
               {isListening ? (
@@ -104,8 +174,8 @@ export default function VoiceConversationModal({ open, onOpenChange }) {
                 <div
                   key={index}
                   className={`p-3 rounded-xl ${item.type === 'user'
-                      ? 'bg-gradient-to-r from-fuchsia-100 to-pink-100 ml-8'
-                      : 'bg-gradient-to-r from-cyan-100 to-violet-100 mr-8'
+                    ? 'bg-gradient-to-r from-fuchsia-100 to-pink-100 ml-8'
+                    : 'bg-gradient-to-r from-cyan-100 to-violet-100 mr-8'
                     }`}
                 >
                   <p className="text-sm font-semibold text-slate-600 mb-1">

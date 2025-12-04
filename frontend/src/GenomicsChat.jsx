@@ -127,9 +127,22 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
         toast.success(t('speechCaptured'));
       };
 
-      recognitionRef.current.onerror = () => {
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
         setIsListening(false);
-        toast.error(t('speechError'));
+
+        let errorMessage = t('speechError');
+        if (event.error === 'not-allowed') {
+          errorMessage = 'Microphone access denied. Please check your browser permissions.';
+        } else if (event.error === 'no-speech') {
+          errorMessage = 'No speech detected. Please try again.';
+        } else if (event.error === 'network') {
+          errorMessage = 'Network error. If you are using an AdBlocker or Brave Browser, please disable shields/blocking for this site.';
+        } else if (event.error === 'service-not-allowed') {
+          errorMessage = 'Speech service not allowed. Please try Chrome or Edge.';
+        }
+
+        toast.error(errorMessage);
       };
 
       recognitionRef.current.onend = () => {
@@ -142,7 +155,7 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
   useEffect(() => {
     const checkOllamaConnection = async () => {
       try {
-        const ollamaUrl = localStorage.getItem('ollamaUrl') || `http://${window.location.hostname}:11434`;
+        const ollamaUrl = localStorage.getItem('ollamaUrl') || 'https://ollama.progenicslabs.com';
         const response = await fetch(`${ollamaUrl}/api/tags`);
         if (response.ok) {
           const data = await response.json();
@@ -563,8 +576,8 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
                             size="sm"
                             onClick={() => handleSpeak(message.id, message.content)}
                             className={`h-8 px-2 transition-colors ${speakingMessageId === message.id
-                                ? 'text-red-500 hover:text-red-600 hover:bg-red-50'
-                                : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
+                              ? 'text-red-500 hover:text-red-600 hover:bg-red-50'
+                              : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
                               }`}
                             title={speakingMessageId === message.id ? 'Stop Speaking' : t('readAloud')}
                           >

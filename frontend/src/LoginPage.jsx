@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Eye, EyeOff, Dna, Mail } from 'lucide-react';
 import { apiService } from './lib/apiService';
+import logo from './assets/askevo-logo.png';
 
 // Interactive DNA Strand Component
 function InteractiveDnaStrand({ baseX, baseY, dnaIndex, mouseX, mouseY }) {
@@ -22,7 +23,7 @@ function InteractiveDnaStrand({ baseX, baseY, dnaIndex, mouseX, mouseY }) {
     const dx = mouseX - baseX;
     const dy = mouseY - baseY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    
+
     // Repel from mouse when too close
     if (distance < 300) {
       const angle = Math.atan2(dy, dx);
@@ -58,7 +59,7 @@ function InteractiveDnaStrand({ baseX, baseY, dnaIndex, mouseX, mouseY }) {
         animationDelay: `${(dnaIndex * 0.3) % 4}s`,
       }}
     >
-      <Dna 
+      <Dna
         size={size}
         color={color}
         style={{
@@ -255,7 +256,7 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="min-h-screen flex items-center justify-center relative overflow-hidden p-4"
     >
@@ -294,7 +295,7 @@ export default function LoginPage({ onLogin }) {
       <div className="w-full max-w-md relative z-10 animate-fade-in">
         <div className="mb-8 text-center">
           <div className="flex flex-col items-center justify-center gap-4 mb-6">
-            <img src="/askEVO_logo.png" alt="askEVO" className="h-40 w-auto" style={{ filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15))' }} />
+            <img src={logo} alt="askEVO" className="h-40 w-auto" style={{ filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15))' }} />
           </div>
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="text-slate-300">Powered by</span>

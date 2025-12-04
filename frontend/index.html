@@ -13,26 +13,28 @@
 
 <body>
     <script>
-        // Clear old cached API URLs that use HTTP or local IPs (iOS Safari fix)
+        // Force update all API URLs to use correct paths
         (function () {
             const genomicsApiUrl = localStorage.getItem('genomicsApiUrl');
             const ollamaUrl = localStorage.getItem('ollamaUrl');
 
-            // Remove if it contains http:// or local IP addresses
-            if (genomicsApiUrl && (genomicsApiUrl.startsWith('http://') || genomicsApiUrl.includes('192.168') || genomicsApiUrl.includes('localhost'))) {
-                console.log('[iOS Fix] Clearing old genomicsApiUrl:', genomicsApiUrl);
-                localStorage.removeItem('genomicsApiUrl');
+            // Always use /api for genomics API
+            if (!genomicsApiUrl || genomicsApiUrl !== '/api') {
+                console.log('[API Fix] Setting genomicsApiUrl to /api');
+                localStorage.setItem('genomicsApiUrl', '/api');
             }
 
-            if (ollamaUrl && (ollamaUrl.startsWith('http://') || ollamaUrl.includes('192.168') || ollamaUrl.includes('localhost') || ollamaUrl.includes(':11434'))) {
-                console.log('[iOS Fix] Clearing old ollamaUrl:', ollamaUrl);
-                localStorage.removeItem('ollamaUrl');
+            // Always use HTTPS subdomain for Ollama
+            if (!ollamaUrl || ollamaUrl !== 'https://ollama.progenicslabs.com') {
+                console.log('[Ollama Fix] Setting Ollama URL to HTTPS subdomain');
+                localStorage.setItem('ollamaUrl', 'https://ollama.progenicslabs.com');
             }
         })();
     </script>
     <div id="root"></div>
     <!-- Optional: ResponsiveVoice for TTS fallback (free tier, non-commercial) -->
-    <script src="https://code.responsivevoice.org/responsivevoice.js?key=RK4qNMYz"></script>
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=RK4qNMYz"
+        onerror="console.warn('ResponsiveVoice blocked by client (likely AdBlocker). TTS may not work.')"></script>
     <script type="module" src="/src/main.jsx"></script>
 </body>
 

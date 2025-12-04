@@ -160,23 +160,14 @@ export default function Dashboard({ user, onLogout }) {
         />
       </div>
 
-      {/* Toggle Button (Visible when sidebar is closed) */}
-      <div className={`fixed left-4 top-4 z-40 transition-opacity duration-300 ${isSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="p-2 bg-white/80 backdrop-blur-md border border-cyan-200 rounded-lg shadow-md hover:bg-cyan-50 text-cyan-700 transition-all hover:scale-105"
-          title="Open Sidebar"
-        >
-          <PanelLeft className="h-6 w-6" />
-        </button>
-      </div>
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col w-full h-full">
         {activeSection === 'genomics' ? (
           <GenomicsChat
             chatId={activeChat}
             chatName={chatHistory.find(c => c.id === activeChat)?.name || 'Chat'}
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            isSidebarOpen={isSidebarOpen}
           />
         ) : (
           <PedigreeChart />

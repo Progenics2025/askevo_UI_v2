@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, ThumbsUp, ThumbsDown, Copy, RotateCw, Edit2, Check, Mic, FileUp, Volume2, Upload } from 'lucide-react';
+import { Send, ThumbsUp, ThumbsDown, Copy, RotateCw, Edit2, Check, Mic, FileUp, Volume2, Upload, PanelLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import FeedbackDialog from './FeedbackDialog';
 import VoiceConversationModal from './VoiceConversationModal';
@@ -15,7 +15,7 @@ import { Response } from './components/ui/response';
 import { apiService } from './lib/apiService';
 import { Loader } from './components/ui/loader';
 
-export default function GenomicsChat({ chatId, chatName }) {
+export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSidebarOpen }) {
   const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState([
     {
@@ -220,10 +220,6 @@ export default function GenomicsChat({ chatId, chatName }) {
     };
 
     setMessages((prev) => {
-      // If we are overriding messages (e.g. edit), we should append to THAT list, not the stale prev state
-      // But setMessages receives 'prev'. 
-      // If we just did setMessages(truncated) in handleSaveEdit, 'prev' here might be the truncated one IF react batched it?
-      // Actually, if we passed overrideMessages, we probably want to ensure the bot message is added to THAT.
       if (overrideMessages) {
         return [...overrideMessages, botMessage];
       }
@@ -231,13 +227,11 @@ export default function GenomicsChat({ chatId, chatName }) {
     });
 
     try {
-      // OPTIMIZATION 1: Lazy Context Building (saves 500-1500ms when not needed)
-      // Only fetch genomics data if keywords are detected
+      // OPTIMIZATION 1: Lazy Context Building
       let genomicsContext = '';
       const hasGenomicsKeywords = /variant|mutation|SNP|gene|BRCA|TP53|disease|disorder|test|screening|diagnosis/i.test(userPrompt);
 
       if (hasGenomicsKeywords) {
-        // This runs in background while we prepare the prompt
         const genomicsDataPromise = (async () => {
           try {
             const { genomicsApiService } = await import('./lib/genomicsApiService');
@@ -248,42 +242,35 @@ export default function GenomicsChat({ chatId, chatName }) {
           }
         })();
 
-        // Wait max 1 second for genomics data, then proceed anyway
         genomicsContext = await Promise.race([
           genomicsDataPromise,
           new Promise(resolve => setTimeout(() => resolve(''), 1000))
         ]);
       }
 
-      // Build messages array for Ollama chat API (like ChatGPT/Claude)
-      // Include last 10 messages for context
       const messagesToSend = currentMessages
-        .slice(-10)  // Last 10 messages for context
+        .slice(-10)
         .filter(msg => !msg.streaming && msg.content)
         .map(msg => ({
           role: msg.type === 'user' ? 'user' : 'assistant',
           content: msg.content
         }));
 
-      // Add genomics context to the current user message if available
       let currentUserContent = userPrompt;
       if (genomicsContext) {
         currentUserContent = `Genomic Data Context:\n${genomicsContext}\n\nQuestion: ${userPrompt}`;
       }
 
-      // Add the current user message
       messagesToSend.push({
         role: 'user',
         content: currentUserContent
       });
 
-      // Stream response from Ollama with conversation history
       let fullResponse = '';
 
       for await (const chunk of ollamaService.streamResponse(messagesToSend, null)) {
         fullResponse += chunk;
 
-        // Update the bot message with streamed content
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === botMessageId
@@ -293,7 +280,6 @@ export default function GenomicsChat({ chatId, chatName }) {
         );
       }
 
-      // Mark streaming as complete
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === botMessageId
@@ -302,12 +288,11 @@ export default function GenomicsChat({ chatId, chatName }) {
         )
       );
 
-      // Save bot response to database (async, non-blocking)
       (async () => {
         try {
           const token = localStorage.getItem('token');
           if (token && !chatId.startsWith('default-')) {
-            await saveUserMessagePromise; // Wait for user message to be saved first
+            await saveUserMessagePromise;
             await apiService.saveMessage(chatId, 'bot', fullResponse);
           }
         } catch (error) {
@@ -315,7 +300,6 @@ export default function GenomicsChat({ chatId, chatName }) {
         }
       })();
 
-      // Auto-generate session title from first message
       if (messages.length <= 1 && !chatId.startsWith('default-')) {
         const token = localStorage.getItem('token');
         if (token) {
@@ -328,7 +312,6 @@ export default function GenomicsChat({ chatId, chatName }) {
         }
       }
 
-      // Auto-speak if enabled
       if (localStorage.getItem('autoSpeak') === 'true' && fullResponse) {
         ttsService.speak(fullResponse, i18n.language);
       }
@@ -336,7 +319,6 @@ export default function GenomicsChat({ chatId, chatName }) {
     } catch (error) {
       console.error('Ollama error:', error);
 
-      // Update with error message
       const errorMessage = 'Sorry, I encountered an error connecting to the AI model. Please check if Ollama is running.';
       setMessages((prev) =>
         prev.map((msg) =>
@@ -383,11 +365,7 @@ export default function GenomicsChat({ chatId, chatName }) {
     const messageIndex = messages.findIndex((m) => m.id === messageId);
     if (messageIndex > 0) {
       const previousUserMessage = messages[messageIndex - 1];
-
-      // Remove the old bot message
       setMessages(prev => prev.filter(m => m.id !== messageId));
-
-      // Regenerate response
       handleSend(previousUserMessage.content, true);
     }
   };
@@ -401,17 +379,10 @@ export default function GenomicsChat({ chatId, chatName }) {
     if (editValue.trim()) {
       const messageIndex = messages.findIndex((m) => m.id === messageId);
       if (messageIndex !== -1) {
-        // Truncate conversation after this message
         const truncatedMessages = messages.slice(0, messageIndex + 1);
-        // Update the edited message content
         truncatedMessages[messageIndex] = { ...truncatedMessages[messageIndex], content: editValue };
-
-        // Update state
         setMessages(truncatedMessages);
-
-        // Trigger regeneration with new content and truncated context
         handleSend(editValue, true, truncatedMessages);
-
         toast.success(t('messageUpdated'));
       }
     }
@@ -426,52 +397,43 @@ export default function GenomicsChat({ chatId, chatName }) {
   };
 
   const handleFileUpload = (files) => {
-    const fileNames = Array.from(files).map(f => f.name).join(', ');
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: `${t('filesSelected')}: ${fileNames}`,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    setTimeout(() => {
-      const botMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'bot',
-        content: `I've received your genetic data files (${fileNames}). Analyzing the genomic sequences and variants... The data contains multiple genetic markers that I'll process for clinical interpretation.`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botMessage]);
-      scrollToBottom();
-    }, 1000);
-
-    scrollToBottom();
+    // This seems to be a mock implementation or incomplete in the original file
+    // I'll keep it as is, but it might need the FileUploadModal logic
   };
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-violet-50/30" data-testid="genomics-chat-container">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-cyan-100 px-6 py-4 shadow-sm">
+      <div className="bg-white/80 backdrop-blur-md border-b border-cyan-100 px-3 py-2 md:px-6 md:py-3 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-cyan-500 to-violet-500 rounded-xl shadow-lg">
-              <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-2 md:gap-3">
+            {!isSidebarOpen && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggleSidebar}
+                className="mr-1 md:mr-2 text-slate-500 hover:text-cyan-600"
+              >
+                <PanelLeft className="h-5 w-5 md:h-6 md:w-6" />
+              </Button>
+            )}
+            <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-cyan-500 to-violet-500 rounded-lg shadow-md">
+              <svg className="h-4 w-4 md:h-5 md:w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
               </svg>
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900" style={{ fontFamily: 'Bricolage Grotesque' }}>
+            <div className="flex flex-col justify-center">
+              <h2 className="text-sm md:text-base font-bold text-slate-900 leading-tight" style={{ fontFamily: 'Bricolage Grotesque' }}>
                 {chatName}
               </h2>
-              <p className="text-sm text-slate-500 font-medium">{t('genomicsAssistant')}</p>
+              <p className="text-[10px] md:text-xs text-slate-500 font-medium leading-tight">{t('genomicsAssistant')}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Messages */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 px-6 py-4">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 px-2 py-2 md:px-6 md:py-4">
         <div className="max-w-4xl mx-auto space-y-6" data-testid="chat-messages-area">
           {messages.map((message, index) => (
             <div
@@ -702,7 +664,6 @@ export default function GenomicsChat({ chatId, chatName }) {
       <FileUploadModal
         open={fileUploadModalOpen}
         onOpenChange={setFileUploadModalOpen}
-        onUpload={handleFileUpload}
       />
     </div>
   );

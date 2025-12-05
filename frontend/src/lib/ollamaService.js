@@ -1,44 +1,228 @@
-// Ollama Service for streaming LLM responses
+// Enhanced Ollama Service for Progenics geneLLM
+// Specialized genomics AI assistant with domain restrictions
+
 const OLLAMA_DEFAULT_URL = 'https://ollama.progenicslabs.com';
 
 class OllamaService {
     constructor() {
         this.baseUrl = this.getOllamaUrl();
+        this.conversationContext = [];
     }
 
     getOllamaUrl() {
         return localStorage.getItem('ollamaUrl') || OLLAMA_DEFAULT_URL;
     }
 
+    /**
+     * Enhanced system prompt with domain restrictions and friendly persona
+     */
+    getEnhancedSystemPrompt() {
+        return {
+            role: 'system',
+            content: `You are **Progenics geneLLM**, powered by **askEVO Genomic Assistant** - a specialized AI developed by Progenics for genomics, genetics, and life sciences.
+
+🧬 **YOUR IDENTITY:**
+- Name: Progenics geneLLM
+- Platform: askEVO Genomic Assistant
+- Developer: Progenics
+- Specialization: Genomics, Genetics, Medical Sciences, Healthcare, Life Sciences
+
+🎯 **YOUR EXPERTISE:**
+You are an expert in:
+- **Genetic Variants & Mutations**: ACMG/AMP classification, clinical significance, population frequencies
+- **Genomic Technologies**: NGS, WGS, WES, RNA-Seq, variant calling pipelines (GATK, FreeBayes)
+- **Gene Function & Regulation**: Gene expression, transcriptional regulation, epigenetics
+- **Clinical Genomics**: Inherited disorders, pharmacogenomics, cancer genomics, rare diseases
+- **Bioinformatics**: Sequence analysis, variant annotation, pathway analysis
+- **Genetic Counseling**: Inheritance patterns, risk assessment, family history analysis
+- **Molecular Biology**: DNA/RNA structure, protein function, genetic mechanisms
+- **Medical Genetics**: Disease-gene associations, diagnostic testing, precision medicine
+
+📋 **RESPONSE STRUCTURE:**
+When providing genomic information, use this format when appropriate:
+
+**For Variant Analysis:**
+🧬 **VARIANT:** [Gene] [Variant ID]
+📋 **NOMENCLATURE:** HGVS notation if available
+🔬 **IMPACT:** Predicted functional effect
+📊 **FREQUENCY:** Population data (gnomAD, ExAC)
+⚕️ **CLINICAL SIGNIFICANCE:** ACMG classification
+💡 **RECOMMENDATION:** Genetic counseling guidance
+⚠️ **DISCLAIMER:** Professional consultation required
+
+**For General Questions:**
+Provide clear, evidence-based explanations with:
+- Key concept explanation
+- Clinical relevance
+- Current research/guidelines
+- Resources for further learning
+
+🚫 **STRICT DOMAIN RESTRICTIONS:**
+You MUST ONLY respond to questions within these domains:
+✅ Genomics, Genetics, Molecular Biology
+✅ Medical Sciences & Healthcare
+✅ Life Sciences & Biotechnology
+✅ Clinical Laboratory Sciences
+✅ Pharmacogenomics & Precision Medicine
+✅ Bioinformatics & Computational Biology
+
+If asked about topics OUTSIDE these domains (e.g., cooking, sports, politics, general knowledge, entertainment), politely respond:
+
+"I'm Progenics geneLLM, specialized in genomics and life sciences. I'm designed to help with:
+🧬 Genetic variants and mutations
+🔬 Genomic technologies and sequencing
+⚕️ Clinical genetics and inherited disorders
+🧪 Molecular biology and gene function
+
+For questions outside genomics and medical sciences, I'd recommend consulting a general AI assistant. How can I help you with genomics or genetics today?"
+
+💬 **COMMUNICATION STYLE:**
+- **Friendly & Professional**: Warm, approachable, yet scientifically rigorous
+- **Clear & Accessible**: Explain complex concepts simply without oversimplifying
+- **Empathetic**: Understand that genetic information can be emotional and personal
+- **Evidence-Based**: Always cite scientific basis when making claims
+- **Honest About Limitations**: Acknowledge uncertainty and recommend professional consultation
+- **Educational**: Help users understand, not just provide answers
+
+🔒 **CRITICAL SAFETY RULES:**
+1. **Never diagnose**: Always recommend consulting healthcare providers or genetic counselors
+2. **Acknowledge uncertainty**: Use phrases like "research suggests," "typically," "may indicate"
+3. **Recommend professional consultation**: For clinical decisions, testing, or interpretation
+4. **Respect privacy**: Never request personal genetic data or health information
+5. **Stay current**: Acknowledge that genomics is rapidly evolving
+6. **Cite sources**: Reference databases (ClinVar, OMIM, gnomAD) when relevant
+
+📚 **REFERENCE DATABASES:**
+When relevant, mention these authoritative sources:
+- ClinVar: Clinical variant interpretations
+- gnomAD: Population allele frequencies
+- OMIM: Gene-disease relationships
+- ClinGen: Gene-disease validity
+- PharmGKB: Pharmacogenomics
+- HGMD: Human Gene Mutation Database
+- ACMG: Guidelines for variant classification
+
+🎓 **EDUCATIONAL APPROACH:**
+- Start with fundamentals before diving deep
+- Use analogies to explain complex concepts
+- Offer to clarify or expand on any point
+- Encourage questions and further exploration
+
+Remember: You represent Progenics and the askEVO Genomic Assistant. Be helpful, accurate, and always professional while maintaining a warm, approachable demeanor. Every interaction should reinforce trust in genomics expertise.
+
+When users thank you or show appreciation, acknowledge with warmth: "You're welcome! I'm here whenever you need genomics expertise. Feel free to ask anything about genetics and genomics!"
+
+🌟 **YOUR MISSION:** Empower users with accurate genomic knowledge while always prioritizing their safety and directing them to appropriate professional resources for clinical decisions.`
+        };
+    }
+
+    /**
+     * Validate if question is within allowed domains
+     */
+    isValidGenomicsDomain(message) {
+        const genomicsKeywords = [
+            // Core genomics terms
+            'gene', 'genetic', 'genome', 'dna', 'rna', 'mutation', 'variant',
+            'chromosome', 'allele', 'genotype', 'phenotype', 'sequencing',
+            'ngs', 'pcr', 'crispr', 'snp', 'indel', 'cnv',
+
+            // Medical/clinical terms
+            'disease', 'disorder', 'syndrome', 'cancer', 'tumor', 'inheritance',
+            'diagnosis', 'clinical', 'patient', 'treatment', 'therapy',
+            'pharmacogenomics', 'drug', 'medicine', 'health',
+
+            // Molecular biology
+            'protein', 'amino acid', 'transcription', 'translation', 'expression',
+            'epigenetic', 'methylation', 'pathway', 'cell', 'molecular',
+
+            // Technical terms
+            'bioinformatics', 'annotation', 'pipeline', 'analysis', 'vcf',
+            'bam', 'fastq', 'alignment', 'assembly', 'blast',
+
+            // Databases and standards
+            'clinvar', 'omim', 'gnomad', 'acmg', 'hgvs', 'ensembl',
+
+            // Life sciences
+            'biology', 'biotechnology', 'research', 'laboratory', 'assay'
+        ];
+
+        const messageLower = message.toLowerCase();
+
+        // Check if message contains any genomics-related keywords
+        return genomicsKeywords.some(keyword => messageLower.includes(keyword));
+    }
+
+    /**
+     * Get out-of-domain response
+     */
+    getOutOfDomainResponse() {
+        return `I'm **Progenics geneLLM**, your specialized genomics AI assistant powered by **askEVO Genomic Assistant**. 
+
+I'm specifically designed to help with:
+
+🧬 **Genetics & Genomics**
+- Genetic variants and mutations
+- Gene function and regulation
+- Inheritance patterns
+
+🔬 **Clinical Genomics**
+- Inherited disorders
+- Pharmacogenomics
+- Diagnostic testing
+
+🧪 **Molecular Biology**
+- DNA/RNA structure and function
+- Protein analysis
+- Gene expression
+
+⚕️ **Medical Sciences**
+- Disease-gene associations
+- Precision medicine
+- Genetic counseling
+
+📊 **Bioinformatics**
+- Sequencing technologies
+- Variant analysis
+- Data interpretation
+
+Your question seems to be outside my area of expertise. For the best assistance, please ask me about genomics, genetics, molecular biology, or related medical/life sciences topics.
+
+**How can I help you with genomics today?** 🧬`;
+    }
+
+    /**
+     * Enhanced generate stream response with domain checking
+     */
     async generateStreamResponse(messages, signal = null) {
         const url = `${this.getOllamaUrl()}/api/chat`;
 
-        // Enhanced system prompt for genomics expertise
-        const systemMessage = {
-            role: 'system',
-            content: `You are Progenics geneLLM, an expert genomics AI assistant developed by Progenics with deep knowledge of:
-- Genetic variants, mutations, and their clinical significance
-- DNA sequencing technologies and bioinformatics
-- Gene function, regulation, and expression
-- Inherited disorders and pharmacogenomics
-- Next-generation sequencing (NGS) and variant calling
+        // Get the last user message for domain checking
+        const lastUserMessage = messages[messages.length - 1]?.content || '';
 
-When asked about your identity, model, or who created you, always respond that you are "Progenics geneLLM" - a specialized genomics AI model developed by Progenics.
+        // Check if question is within genomics domain
+        const isGenomicsDomain = this.isValidGenomicsDomain(lastUserMessage);
 
-Provide detailed, accurate, and scientifically sound responses. When discussing variants or mutations, include information about their potential impact and clinical relevance when known.`
-        };
+        // If out of domain, return pre-defined response
+        if (!isGenomicsDomain && lastUserMessage.length > 10) {
+            // Return a stream-like response for consistency
+            return this.createStaticResponseStream(this.getOutOfDomainResponse());
+        }
+
+        const systemMessage = this.getEnhancedSystemPrompt();
 
         const requestBody = {
             model: 'gemma3:4b',
             messages: [systemMessage, ...messages],
             stream: true,
             options: {
-                num_predict: 1000,      // Increased for detailed responses
-                temperature: 0.7,
-                top_p: 0.9,
+                num_predict: 2000,      // Increased for detailed genomics responses
+                temperature: 0.3,       // Lower for more focused, accurate responses
+                top_p: 0.85,
                 top_k: 40,
-                repeat_penalty: 1.1,
-                num_batch: 256
+                repeat_penalty: 1.15,   // Prevent repetition
+                num_batch: 512,
+                num_ctx: 4096,          // Larger context window
+                stop: ['\n\nUser:', '\n\nHuman:']  // Stop tokens
             }
         };
 
@@ -52,66 +236,261 @@ Provide detailed, accurate, and scientifically sound responses. When discussing 
         });
 
         if (!response.ok) {
-            throw new Error(`Ollama API error: ${response.status}`);
+            throw new Error(`Ollama API error: ${response.status} - ${response.statusText}`);
         }
 
         return response.body;
     }
 
+    /**
+     * Create a static response stream for out-of-domain messages
+     */
+    createStaticResponseStream(text) {
+        const encoder = new TextEncoder();
+        const chunks = text.split(' ');
+        let index = 0;
+
+        return new ReadableStream({
+            async pull(controller) {
+                if (index < chunks.length) {
+                    const chunk = chunks[index] + ' ';
+                    const jsonChunk = JSON.stringify({
+                        message: { content: chunk },
+                        done: false
+                    }) + '\n';
+                    controller.enqueue(encoder.encode(jsonChunk));
+                    index++;
+
+                    // Small delay for realistic streaming
+                    await new Promise(resolve => setTimeout(resolve, 30));
+                } else {
+                    const doneChunk = JSON.stringify({
+                        message: { content: '' },
+                        done: true
+                    }) + '\n';
+                    controller.enqueue(encoder.encode(doneChunk));
+                    controller.close();
+                }
+            }
+        });
+    }
+
+    /**
+     * Stream response generator with enhanced error handling
+     */
     async *streamResponse(messages, signal = null) {
-        const stream = await this.generateStreamResponse(messages, signal);
-        const reader = stream.getReader();
-        const decoder = new TextDecoder();
-
         try {
-            while (true) {
-                const { done, value } = await reader.read();
+            const stream = await this.generateStreamResponse(messages, signal);
+            const reader = stream.getReader();
+            const decoder = new TextDecoder();
 
-                if (done) break;
+            let buffer = '';
 
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n').filter(line => line.trim());
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
 
-                for (const line of lines) {
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+
+                    // Keep the last incomplete line in buffer
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+
+                        try {
+                            const parsed = JSON.parse(line);
+
+                            if (parsed.message && parsed.message.content) {
+                                yield parsed.message.content;
+                            }
+
+                            if (parsed.done) {
+                                return;
+                            }
+                        } catch (e) {
+                            console.warn('Failed to parse chunk:', line, e);
+                        }
+                    }
+                }
+
+                // Process any remaining buffer
+                if (buffer.trim()) {
                     try {
-                        const parsed = JSON.parse(line);
+                        const parsed = JSON.parse(buffer);
                         if (parsed.message && parsed.message.content) {
                             yield parsed.message.content;
                         }
-                        if (parsed.done) {
-                            return;
-                        }
                     } catch (e) {
-                        console.error('Failed to parse chunk:', e);
+                        console.warn('Failed to parse final buffer:', e);
                     }
                 }
+            } finally {
+                reader.releaseLock();
             }
-        } finally {
-            reader.releaseLock();
+        } catch (error) {
+            console.error('Stream error:', error);
+
+            // Provide user-friendly error message
+            yield '\n\n---\n\n';
+            yield '⚠️ **Connection Issue**\n\n';
+            yield 'I apologize, but I\'m having trouble connecting to the genomics knowledge base. ';
+            yield 'Please check your connection and try again.\n\n';
+            yield 'If the issue persists, please contact Progenics support.\n\n';
+            yield `**Error details:** ${error.message}`;
         }
     }
 
+    /**
+     * Check Ollama connection with enhanced diagnostics
+     */
     async checkConnection() {
         try {
-            const response = await fetch(`${this.getOllamaUrl()}/api/tags`);
-            return response.ok;
-        } catch {
-            return false;
+            const response = await fetch(`${this.getOllamaUrl()}/api/tags`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                signal: AbortSignal.timeout(5000) // 5 second timeout
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return {
+                    connected: true,
+                    models: data.models || [],
+                    url: this.getOllamaUrl()
+                };
+            }
+
+            return {
+                connected: false,
+                error: `Server returned status ${response.status}`,
+                url: this.getOllamaUrl()
+            };
+        } catch (error) {
+            return {
+                connected: false,
+                error: error.message,
+                url: this.getOllamaUrl()
+            };
         }
     }
 
+    /**
+     * Get available models with enhanced information
+     */
     async getModels() {
         try {
             const response = await fetch(`${this.getOllamaUrl()}/api/tags`);
+
             if (response.ok) {
                 const data = await response.json();
-                return data.models || [];
+                return (data.models || []).map(model => ({
+                    name: model.name,
+                    size: model.size,
+                    modified: model.modified_at,
+                    digest: model.digest,
+                    recommended: model.name.includes('gemma') || model.name.includes('llama')
+                }));
             }
         } catch (error) {
             console.error('Failed to fetch models:', error);
         }
+
         return [];
+    }
+
+    /**
+     * Add context tracking for better conversations
+     */
+    addToContext(role, content) {
+        this.conversationContext.push({ role, content });
+
+        // Keep only last 10 exchanges to manage context window
+        if (this.conversationContext.length > 20) {
+            this.conversationContext = this.conversationContext.slice(-20);
+        }
+    }
+
+    /**
+     * Clear conversation context
+     */
+    clearContext() {
+        this.conversationContext = [];
+    }
+
+    /**
+     * Get conversation context
+     */
+    getContext() {
+        return this.conversationContext;
+    }
+
+    /**
+     * Test query to verify genomics specialization
+     */
+    async testGenomicsKnowledge() {
+        const testMessages = [{
+            role: 'user',
+            content: 'What is BRCA1 and what is its clinical significance?'
+        }];
+
+        try {
+            let response = '';
+            for await (const chunk of this.streamResponse(testMessages)) {
+                response += chunk;
+            }
+            return {
+                success: true,
+                response: response.substring(0, 200) + '...'
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Get system status
+     */
+    async getSystemStatus() {
+        const connection = await this.checkConnection();
+        const models = connection.connected ? await this.getModels() : [];
+
+        return {
+            service: 'Progenics geneLLM (askEVO Genomic Assistant)',
+            url: this.getOllamaUrl(),
+            connected: connection.connected,
+            error: connection.error,
+            availableModels: models.length,
+            models: models,
+            contextSize: this.conversationContext.length,
+            timestamp: new Date().toISOString()
+        };
     }
 }
 
+// Export singleton instance
 export const ollamaService = new OllamaService();
+
+// Export class for testing or multiple instances
+export { OllamaService };
+
+// Helper function to format genomics-specific responses
+export const formatGenomicsResponse = (text) => {
+    // Add visual separators for better readability
+    return text
+        .replace(/\*\*VARIANT:\*\*/g, '\n🧬 **VARIANT:**')
+        .replace(/\*\*NOMENCLATURE:\*\*/g, '\n📋 **NOMENCLATURE:**')
+        .replace(/\*\*IMPACT:\*\*/g, '\n🔬 **IMPACT:**')
+        .replace(/\*\*FREQUENCY:\*\*/g, '\n📊 **FREQUENCY:**')
+        .replace(/\*\*CLINICAL SIGNIFICANCE:\*\*/g, '\n⚕️ **CLINICAL SIGNIFICANCE:**')
+        .replace(/\*\*RECOMMENDATION:\*\*/g, '\n💡 **RECOMMENDATION:**')
+        .replace(/\*\*DISCLAIMER:\*\*/g, '\n⚠️ **DISCLAIMER:**');
+};

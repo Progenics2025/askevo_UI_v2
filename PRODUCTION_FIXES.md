@@ -49,6 +49,15 @@
 - **Breakpoint:** Changed to `lg` (1024px).
 - **Layout:** Fixed `Dashboard.jsx` flex layout with `min-w-0`.
 
+## 7. Enhanced Ollama Service
+**Update:** Replaced `ollamaService.js` with an enhanced version.
+**Features:**
+- **Detailed System Prompt:** Defines "Progenics geneLLM" persona with strict domain expertise.
+- **Domain Restriction:** `isValidGenomicsDomain` checks user queries against a keyword list.
+- **Out-of-Domain Handling:** Returns a polite, static response for irrelevant queries.
+- **Improved Streaming:** Better error handling and buffer management for JSON chunks.
+- **Diagnostics:** Enhanced connection checking and model listing.
+
 ## Verification
 1. **Logo:** Refresh `chat.progenicslabs.com`. Logo should be very large (`h-20`).
 2. **Chat Menu:** You should see the three-dots menu icon next to every chat session name. Clicking it should open the "Rename" and "Delete" options.
@@ -57,3 +66,5 @@
 5. **Speech:** If speech fails, check the toast message.
 6. **NFC:** Tap card -> Enter OTP -> Verify -> Redirect to Chat.
 7. **Voice Mode:** Speak a query.
+8. **Genomics Chat:** Ask a genomics question (e.g., "What is BRCA1?"). It should answer with the new persona.
+9. **Domain Check:** Ask a non-genomics question (e.g., "How to bake a cake?"). It should politely decline.

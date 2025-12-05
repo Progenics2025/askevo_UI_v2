@@ -140,7 +140,7 @@ export default function Sidebar({
                     >
                       <MoreVertical className="h-4 w-4 text-white" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="z-[100]">
                       <DropdownMenuItem onClick={() => handleEditClick(chat)} data-testid={`edit-chat-${chat.id}`}>
                         <Edit2 className="mr-2 h-4 w-4" />
                         {t('rename')}

@@ -24,7 +24,7 @@
 - **Theme Update:** Applied `bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900` to the sidebar container.
 - **Text Update:** Updated all text colors to `text-white`.
 - **Layout Update:** Moved the "New Chat" button from the header to the Chat History section.
-- **Menu Functionality:** Simplified the `DropdownMenuTrigger` by removing `asChild` and applying styles directly to the Trigger component. This resolves ref forwarding issues and ensures the menu opens correctly. Also ensured `stopPropagation` is handled correctly.
+- **Menu Functionality:** Simplified the `DropdownMenuTrigger` by removing `asChild` and applying styles directly to the Trigger component. Added `z-[100]` to `DropdownMenuContent` to ensure it appears above the sidebar (which has `z-50`).
 - **Text Visibility:** Removed `truncate` and enabled `break-words` (text wrapping) for chat titles. Updated the flex layout to `justify-between` to ensure the menu button always stays on the right edge, even with multi-line text.
 
 ## 3. Speech Recognition Error (ERR_BLOCKED_BY_CLIENT)

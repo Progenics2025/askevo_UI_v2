@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Send, ThumbsUp, ThumbsDown, Copy, RotateCw, Edit2, Check, Mic, FileUp, Volume2, Upload, PanelLeft, Square } from 'lucide-react';
+import { Send, ThumbsUp, ThumbsDown, Copy, RotateCw, Edit2, Check, Mic, FileUp, Volume2, Upload, PanelLeft, Square, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import FeedbackDialog from './FeedbackDialog';
 import VoiceConversationModal from './VoiceConversationModal';
@@ -465,6 +465,23 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
       {/* Messages */}
       <ScrollArea ref={scrollAreaRef} className="flex-1 px-2 py-2 md:px-6 md:py-4">
         <div className="max-w-4xl mx-auto space-y-6" data-testid="chat-messages-area">
+          {!messages.some(m => m.type === 'user') && (
+            <div className="flex flex-col items-center justify-center text-center space-y-6 py-10 animate-fade-in">
+              <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-violet-500 rounded-3xl flex items-center justify-center shadow-xl mb-2 transform hover:scale-105 transition-transform duration-300">
+                <FileText className="h-10 w-10 text-white" />
+              </div>
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight" style={{ fontFamily: 'Bricolage Grotesque' }}>
+                Welcome to AskEvo Genomics Assistant
+              </h3>
+              <p className="text-slate-600 max-w-lg text-lg leading-relaxed">
+                Start a new consultation or select an existing one from the sidebar to begin analyzing genetic variants and providing clinical guidance.
+              </p>
+              <div className="bg-blue-50/80 backdrop-blur-sm border border-blue-200 rounded-2xl p-5 max-w-xl text-sm text-blue-900 shadow-sm">
+                <strong className="font-bold block mb-1 text-blue-700">Clinical Disclaimer:</strong>
+                This AI assistant provides information for clinical decision support only. All recommendations should be validated against current clinical guidelines.
+              </div>
+            </div>
+          )}
           {messages.map((message, index) => (
             <div
               key={message.id}
@@ -681,7 +698,7 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
                 }`}></div>
               <span>
                 {ollamaConnected
-                  ? 'Progenics geneLLM'
+                  ? 'askEVO Genetic Assistant'
                   : 'Model Disconnected'}
               </span>
             </div>

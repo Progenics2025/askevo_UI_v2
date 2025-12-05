@@ -59,6 +59,13 @@
 - **Improved Streaming:** Better error handling and buffer management for JSON chunks.
 - **Diagnostics:** Enhanced connection checking and model listing.
 
+## 8. Welcome Message UI
+**Update:** Updated `GenomicsChat.jsx` to include a styled Welcome Message.
+**Features:**
+- **Welcome UI:** Shows a centered welcome card with icon, title, text, and clinical disclaimer for new chats.
+- **Conditional Rendering:** The Welcome UI disappears once the user sends a message.
+- **Status Bar:** Updated status text to "askEVO Genetic Assistant".
+
 ## Verification
 1. **Logo:** Refresh `chat.progenicslabs.com`. Logo should be very large (`h-20`).
 2. **Chat Menu:** You should see the three-dots menu icon next to every chat session name. Clicking it should open the "Rename" and "Delete" options.
@@ -69,3 +76,4 @@
 7. **Voice Mode:** Speak a query.
 8. **Genomics Chat:** Ask a genomics question (e.g., "What is BRCA1?"). It should answer with the new persona "askEVO Genetic Assistant".
 9. **Domain Check:** Ask a non-genomics question (e.g., "How to bake a cake?"). It should politely decline.
+10. **Welcome UI:** Click "New Chat". You should see the large Welcome UI with the disclaimer. Send a message. The Welcome UI should disappear.

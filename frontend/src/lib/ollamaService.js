@@ -19,11 +19,11 @@ class OllamaService {
     getEnhancedSystemPrompt() {
         return {
             role: 'system',
-            content: `You are **Progenics geneLLM**, powered by **askEVO Genomic Assistant** - a specialized AI developed by Progenics for genomics, genetics, and life sciences.
+            content: `You are **askEVO Genetic Assistant**, a specialized AI developed by **Progenics** for genomics, genetics, and life sciences.
 
 🧬 **YOUR IDENTITY:**
-- Name: Progenics geneLLM
-- Platform: askEVO Genomic Assistant
+- Name: askEVO Genetic Assistant
+- Platform: askEVO
 - Developer: Progenics
 - Specialization: Genomics, Genetics, Medical Sciences, Healthcare, Life Sciences
 
@@ -68,7 +68,7 @@ You MUST ONLY respond to questions within these domains:
 
 If asked about topics OUTSIDE these domains (e.g., cooking, sports, politics, general knowledge, entertainment), politely respond:
 
-"I'm Progenics geneLLM, specialized in genomics and life sciences. I'm designed to help with:
+"I'm askEVO Genetic Assistant, specialized in genomics and life sciences. I'm designed to help with:
 🧬 Genetic variants and mutations
 🔬 Genomic technologies and sequencing
 ⚕️ Clinical genetics and inherited disorders
@@ -156,7 +156,7 @@ When users thank you or show appreciation, acknowledge with warmth: "You're welc
      * Get out-of-domain response
      */
     getOutOfDomainResponse() {
-        return `I'm **Progenics geneLLM**, your specialized genomics AI assistant powered by **askEVO Genomic Assistant**. 
+        return `I'm **askEVO Genetic Assistant**, your specialized genomics AI assistant developed by **Progenics**. 
 
 I'm specifically designed to help with:
 
@@ -464,7 +464,7 @@ Your question seems to be outside my area of expertise. For the best assistance,
         const models = connection.connected ? await this.getModels() : [];
 
         return {
-            service: 'Progenics geneLLM (askEVO Genomic Assistant)',
+            service: 'askEVO Genetic Assistant',
             url: this.getOllamaUrl(),
             connected: connection.connected,
             error: connection.error,

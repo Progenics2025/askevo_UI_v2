@@ -54,7 +54,7 @@ export default function Sidebar({
         <div className="p-5 border-b border-slate-700">
           <div className="flex items-center justify-center mb-5 relative">
             <div className="flex flex-col items-center">
-              <img src={logo} alt="askEVO" className="h-14" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
+              <img src={logo} alt="askEVO" className="h-20" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
             </div>
             <Button
               variant="ghost"
@@ -137,7 +137,7 @@ export default function Sidebar({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 hover:bg-slate-200"
+                        className="h-7 w-7 p-0 text-white hover:bg-slate-700"
                         data-testid={`chat-menu-${chat.id}`}
                       >
                         <MoreVertical className="h-4 w-4" />

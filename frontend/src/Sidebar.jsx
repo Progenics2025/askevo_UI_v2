@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MessageSquarePlus, GitBranch, Trash2, LogOut, MoreVertical, Edit2, Settings, PanelLeftClose } from 'lucide-react';
+import { MessageSquarePlus, GitBranch, Trash2, LogOut, MoreVertical, Edit2, Settings, PanelLeftClose, Dna } from 'lucide-react';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';

@@ -19,13 +19,14 @@
 - The user reported **Chat Items were overflowing** the sidebar, cutting off text and hiding the menu button.
 - The user requested **full visibility of chat titles** (no truncation).
 **Fix:**
-- Removed the `Dna` icon component.
+- Removed the `Dna` icon component from the header (but kept it for the navigation item).
 - **Logo:** Centered, increased size to `h-20` (filling header), and removed tagline.
 - **Theme Update:** Applied `bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900` to the sidebar container.
 - **Text Update:** Updated all text colors to `text-white`.
 - **Layout Update:** Moved the "New Chat" button from the header to the Chat History section.
 - **Menu Functionality:** Simplified the `DropdownMenuTrigger` by removing `asChild` and applying styles directly to the Trigger component. Added `z-[100]` to `DropdownMenuContent` to ensure it appears above the sidebar (which has `z-50`).
 - **Text Visibility:** Removed `truncate` and enabled `break-words` (text wrapping) for chat titles. Updated the flex layout to `justify-between` to ensure the menu button always stays on the right edge, even with multi-line text.
+- **Crash Fix:** Restored the `Dna` import in `Sidebar.jsx` which was accidentally removed, causing a `ReferenceError`.
 
 ## 3. Speech Recognition Error (ERR_BLOCKED_BY_CLIENT)
 **Issue:** The user reported `net::ERR_BLOCKED_BY_CLIENT` and speech failures.

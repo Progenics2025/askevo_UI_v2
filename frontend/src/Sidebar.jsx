@@ -49,19 +49,18 @@ export default function Sidebar({
 
   return (
     <>
-      <div className="w-80 h-full bg-gradient-to-b from-white to-slate-50 border-r-2 border-cyan-100 flex flex-col shadow-lg" data-testid="sidebar-container">
+      <div className="w-80 h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700 flex flex-col shadow-lg" data-testid="sidebar-container">
         {/* Header */}
-        <div className="p-5 border-b-2 border-cyan-100">
+        <div className="p-5 border-b border-slate-700">
           <div className="flex items-center justify-center mb-5 relative">
             <div className="flex flex-col items-center">
-              <img src={logo} alt="askEVO" className="h-11" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
-              <p className="text-[10px] text-slate-500 font-bold tracking-wide mt-1 uppercase">by Progenics</p>
+              <img src={logo} alt="askEVO" className="h-14" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggle}
-              className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50"
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-white hover:text-cyan-400 hover:bg-slate-800"
             >
               <PanelLeftClose className="h-5 w-5" />
             </Button>
@@ -83,7 +82,7 @@ export default function Sidebar({
             onClick={() => setActiveSection('genomics')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeSection === 'genomics'
               ? 'bg-gradient-to-r from-cyan-500 to-violet-500 text-white shadow-lg scale-[1.02]'
-              : 'text-slate-700 hover:bg-slate-100'
+              : 'text-white hover:bg-slate-800'
               }`}
             data-testid="genomics-assistant-nav"
           >
@@ -95,7 +94,7 @@ export default function Sidebar({
             onClick={() => setActiveSection('pedigree')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeSection === 'pedigree'
               ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg scale-[1.02]'
-              : 'text-slate-700 hover:bg-slate-100'
+              : 'text-white hover:bg-slate-800'
               }`}
             data-testid="pedigree-chart-nav"
           >
@@ -104,12 +103,12 @@ export default function Sidebar({
           </button>
         </div>
 
-        <Separator className="my-2" />
+        <Separator className="my-2 bg-slate-700" />
 
         {/* Chat History */}
         <div className="flex-1 overflow-hidden flex flex-col">
           <div className="px-5 py-3">
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('chatHistory')}</h2>
+            <h2 className="text-xs font-bold text-white uppercase tracking-wider">{t('chatHistory')}</h2>
           </div>
 
           <ScrollArea className="flex-1 px-3">
@@ -118,8 +117,8 @@ export default function Sidebar({
                 <div
                   key={chat.id}
                   className={`group flex items-center gap-2 px-3 py-3 rounded-xl cursor-pointer transition-all ${activeChat === chat.id
-                    ? 'bg-gradient-to-r from-cyan-50 to-violet-50 border-2 border-cyan-200 shadow-sm'
-                    : 'hover:bg-slate-100 border-2 border-transparent'
+                    ? 'bg-gradient-to-r from-cyan-900/40 to-violet-900/40 border border-cyan-700/50 shadow-sm'
+                    : 'hover:bg-slate-800 border border-transparent'
                     }`}
                   onClick={() => {
                     setActiveChat(chat.id);
@@ -127,8 +126,8 @@ export default function Sidebar({
                   }}
                   data-testid={`chat-history-item-${chat.id}`}
                 >
-                  <MessageSquarePlus className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                  <span className="flex-1 text-sm text-slate-700 truncate font-semibold">
+                  <MessageSquarePlus className="h-4 w-4 text-white flex-shrink-0" />
+                  <span className="flex-1 text-sm text-white truncate font-semibold">
                     {chat.name}
                   </span>
 
@@ -167,14 +166,14 @@ export default function Sidebar({
           </ScrollArea>
         </div>
 
-        <Separator className="mt-auto" />
+        <Separator className="mt-auto bg-slate-700" />
 
         {/* User Profile & Settings */}
         <div className="p-4 space-y-2">
           {/* Settings Button */}
           <Button
             variant="ghost"
-            className="w-full flex items-center justify-start gap-3 px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-cyan-600 transition-colors"
+            className="w-full flex items-center justify-start gap-3 px-3 py-2 text-white hover:bg-slate-800 hover:text-cyan-400 transition-colors"
             onClick={() => setSettingsOpen(true)}
             data-testid="settings-button"
           >
@@ -182,23 +181,23 @@ export default function Sidebar({
             <span className="font-semibold">{t('settings')}</span>
           </Button>
 
-          <div className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 transition-all">
+          <div className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-800 transition-all">
             <Avatar className="h-10 w-10 shadow-md">
               <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-violet-500 text-white font-bold text-base">
                 {user?.name?.substring(0, 2).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 truncate" data-testid="user-name-display">
+              <p className="text-sm font-bold text-white truncate" data-testid="user-name-display">
                 {user?.name || 'User'}
               </p>
-              <p className="text-xs text-slate-500 truncate font-medium">{user?.email}</p>
+              <p className="text-xs text-white truncate font-medium">{user?.email}</p>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={onLogout}
-              className="h-9 w-9 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              className="h-9 w-9 p-0 text-white hover:text-red-400 hover:bg-red-900/20 transition-colors"
               data-testid="logout-button"
             >
               <LogOut className="h-5 w-5" />

@@ -6,18 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Globe, Mic, Server, Info, Volume2, AlertCircle } from 'lucide-react';
+import { Settings, Globe, Mic, Info, Volume2, AlertCircle } from 'lucide-react';
 import { ttsService } from './lib/tts';
 
 export default function SettingsDialog({ open, onOpenChange }) {
     const { t, i18n } = useTranslation();
     const [autoSpeak, setAutoSpeak] = useState(localStorage.getItem('autoSpeak') === 'true');
-    const [ollamaUrl, setOllamaUrl] = useState(
-        localStorage.getItem('ollamaUrl') || 'https://ollama.progenicslabs.com'
-    );
-    const [apiUrl, setApiUrl] = useState(
-        localStorage.getItem('genomicsApiUrl') || '/api'
-    );
     const [currentVoice, setCurrentVoice] = useState(null);
     const [isTestingVoice, setIsTestingVoice] = useState(false);
 
@@ -60,8 +54,6 @@ export default function SettingsDialog({ open, onOpenChange }) {
 
     const handleSave = () => {
         localStorage.setItem('autoSpeak', autoSpeak);
-        localStorage.setItem('ollamaUrl', ollamaUrl);
-        localStorage.setItem('genomicsApiUrl', apiUrl);
         onOpenChange(false);
     };
 
@@ -142,35 +134,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
                         </div>
                     </div>
 
-                    {/* API Configuration */}
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-lg font-semibold text-slate-800">
-                            <Server className="h-5 w-5 text-emerald-500" />
-                            <h3>{t('apiConfiguration')}</h3>
-                        </div>
-                        <div className="pl-7 space-y-3">
-                            <div className="space-y-1">
-                                <Label htmlFor="ollama-url" className="text-sm font-medium text-slate-600">{t('ollamaUrl')}</Label>
-                                <Input
-                                    id="ollama-url"
-                                    value={ollamaUrl}
-                                    onChange={(e) => setOllamaUrl(e.target.value)}
-                                    className="border-2 border-cyan-100 focus:border-cyan-400"
-                                    placeholder="https://ollama.progenicslabs.com"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="api-url" className="text-sm font-medium text-slate-600">{t('genomicsApiUrl')}</Label>
-                                <Input
-                                    id="api-url"
-                                    value={apiUrl}
-                                    onChange={(e) => setApiUrl(e.target.value)}
-                                    className="border-2 border-cyan-100 focus:border-cyan-400"
-                                    placeholder="http://localhost:3001/api"
-                                />
-                            </div>
-                        </div>
-                    </div>
+
 
                     {/* About Section */}
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -180,7 +144,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
                         </div>
                         <p className="text-sm text-slate-600">Progenics AI - Genomics Chat Assistant</p>
                         <p className="text-xs text-slate-500 mt-1">{t('version')} 1.0.0</p>
-                        <p className="text-xs text-slate-500">{t('poweredBy')} Ollama (Gemma Model)</p>
+                        <p className="text-xs text-slate-500">{t('poweredBy')} Ollama (Progenics geneLLM Model)</p>
                     </div>
                 </div>
 

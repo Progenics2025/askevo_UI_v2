@@ -67,6 +67,13 @@
 - **Conditional Rendering:** The Welcome UI disappears once the user sends a message.
 - **Status Bar:** Updated status text to "askEVO Genetic Assistant".
 
+## 9. Settings Security
+**Update:** Removed API Configuration from Settings Dialog.
+**Fix:**
+- Removed Ollama URL and Genomics API URL inputs from `SettingsDialog.jsx`.
+- This prevents users from accidentally or intentionally changing the backend connections.
+- The application now relies solely on the default values or existing localStorage values (if any).
+
 ## Verification
 1. **Logo:** Refresh `chat.progenicslabs.com`. Logo should be very large (`h-20`).
 2. **Chat Menu:** You should see the three-dots menu icon next to every chat session name. Clicking it should open the "Rename" and "Delete" options.
@@ -80,3 +87,4 @@
     - Ask "what is the purpose of chromatin?" -> Should be ACCEPTED.
     - Ask "how to bake a cake?" -> Should be REJECTED.
 10. **Welcome UI:** Click "New Chat". You should see the large Welcome UI with the disclaimer. Send a message. The Welcome UI should disappear.
+11. **Settings:** Open Settings. You should NOT see "API Configuration", "Ollama URL", or "Genomics API URL".

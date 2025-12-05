@@ -54,9 +54,7 @@ export default function Sidebar({
         <div className="p-5 border-b-2 border-cyan-100">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-cyan-500 via-violet-500 to-fuchsia-500 rounded-2xl shadow-lg animate-pulse">
-                <Dna className="h-6 w-6 text-white" />
-              </div>
+
               <div>
                 <img src={logo} alt="askEVO" className="h-8" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
                 <p className="text-xs text-slate-500 font-semibold">by Progenics</p>

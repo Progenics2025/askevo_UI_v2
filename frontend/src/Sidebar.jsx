@@ -117,7 +117,7 @@ export default function Sidebar({
               {chatHistory.map((chat) => (
                 <div
                   key={chat.id}
-                  className={`group flex items-center gap-2 px-3 py-3 rounded-xl cursor-pointer transition-all ${activeChat === chat.id
+                  className={`group flex items-center justify-between gap-2 px-3 py-3 rounded-xl cursor-pointer transition-all w-full ${activeChat === chat.id
                     ? 'bg-gradient-to-r from-cyan-900/40 to-violet-900/40 border border-cyan-700/50 shadow-sm'
                     : 'hover:bg-slate-800 border border-transparent'
                     }`}
@@ -128,20 +128,17 @@ export default function Sidebar({
                   data-testid={`chat-history-item-${chat.id}`}
                 >
                   <MessageSquarePlus className="h-4 w-4 text-white flex-shrink-0" />
-                  <span className="flex-1 text-sm text-white truncate font-semibold">
+                  <span className="flex-1 text-sm text-white font-semibold break-words min-w-0 mr-2">
                     {chat.name}
                   </span>
 
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-white hover:bg-slate-700"
-                        data-testid={`chat-menu-${chat.id}`}
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                    <DropdownMenuTrigger
+                      className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-slate-700 text-white shrink-0 transition-colors focus:outline-none"
+                      data-testid={`chat-menu-${chat.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-4 w-4 text-white" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEditClick(chat)} data-testid={`edit-chat-${chat.id}`}>

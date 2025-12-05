@@ -12,8 +12,13 @@
 - **Code:** Updated `LoginPage.jsx` to use the new `askEVO_logo.png` provided by the user.
 
 ## 2. Sidebar Aesthetics
-**Issue:** The user requested removal of the DNA icon SVG from the sidebar header.
-**Fix:** Removed the `Dna` icon component from `Sidebar.jsx` to simplify the header design.
+**Issue:**
+- The user requested removal of the DNA icon SVG from the sidebar header.
+- The user requested the sidebar logo be **centered** and **40% larger**.
+**Fix:**
+- Removed the `Dna` icon component.
+- Updated `Sidebar.jsx` to center the logo using flexbox and increased its height from `h-8` (32px) to `h-11` (44px).
+- Positioned the "Close Sidebar" button absolutely to the right to maintain balance.
 
 ## 3. Speech Recognition Error (ERR_BLOCKED_BY_CLIENT)
 **Issue:** The user reported `net::ERR_BLOCKED_BY_CLIENT` and speech failures. This indicates a browser extension (AdBlocker) or privacy setting (Brave Shields) is blocking:
@@ -44,7 +49,7 @@
 
 ## Verification
 1. **Logo:** Refresh `chat.progenicslabs.com`. You should see the new logo image.
-2. **Sidebar:** The DNA icon should be gone from the top-left corner.
+2. **Sidebar:** The logo should be centered and larger. The DNA icon should be gone.
 3. **Speech:** If speech fails, check the toast message.
 4. **NFC:** Tap card -> Enter OTP -> Verify -> Redirect to Chat.
 5. **Voice Mode:** Speak a query.

@@ -52,19 +52,16 @@ export default function Sidebar({
       <div className="w-80 h-full bg-gradient-to-b from-white to-slate-50 border-r-2 border-cyan-100 flex flex-col shadow-lg" data-testid="sidebar-container">
         {/* Header */}
         <div className="p-5 border-b-2 border-cyan-100">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-
-              <div>
-                <img src={logo} alt="askEVO" className="h-8" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
-                <p className="text-xs text-slate-500 font-semibold">by Progenics</p>
-              </div>
+          <div className="flex items-center justify-center mb-5 relative">
+            <div className="flex flex-col items-center">
+              <img src={logo} alt="askEVO" className="h-11" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
+              <p className="text-[10px] text-slate-500 font-bold tracking-wide mt-1 uppercase">by Progenics</p>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggle}
-              className="text-slate-400 hover:text-cyan-600 hover:bg-cyan-50"
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50"
             >
               <PanelLeftClose className="h-5 w-5" />
             </Button>

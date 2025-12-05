@@ -65,15 +65,6 @@ export default function Sidebar({
               <PanelLeftClose className="h-5 w-5" />
             </Button>
           </div>
-
-          <Button
-            onClick={onNewChat}
-            className="w-full bg-gradient-to-r from-cyan-500 via-violet-500 to-fuchsia-500 hover:from-cyan-600 hover:via-violet-600 hover:to-fuchsia-600 text-white font-bold shadow-lg transition-all hover:scale-[1.02] h-11"
-            data-testid="new-chat-button"
-          >
-            <MessageSquarePlus className="mr-2 h-5 w-5" />
-            {t('newChat')}
-          </Button>
         </div>
 
         {/* Navigation Sections */}
@@ -107,7 +98,17 @@ export default function Sidebar({
 
         {/* Chat History */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="px-5 py-3">
+          <div className="px-4 py-3">
+            <Button
+              onClick={onNewChat}
+              className="w-full bg-gradient-to-r from-cyan-500 via-violet-500 to-fuchsia-500 hover:from-cyan-600 hover:via-violet-600 hover:to-fuchsia-600 text-white font-bold shadow-lg transition-all hover:scale-[1.02] h-11"
+              data-testid="new-chat-button"
+            >
+              <MessageSquarePlus className="mr-2 h-5 w-5" />
+              {t('newChat')}
+            </Button>
+          </div>
+          <div className="px-5 py-2">
             <h2 className="text-xs font-bold text-white uppercase tracking-wider">{t('chatHistory')}</h2>
           </div>
 

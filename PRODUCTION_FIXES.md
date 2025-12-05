@@ -1,8 +1,15 @@
 # Production Fixes Summary
 
-## 1. Logo Missing on Login Page
-**Issue:** Static path reference `/askevo-logo.png` was failing in production.
-**Fix:** Moved the logo to `src/assets/askevo-logo.png` and updated `LoginPage.jsx` to import it explicitly.
+## 1. Logo Visibility
+**Issue:** The logo was visible on localhost but missing on `chat.progenicslabs.com`.
+**Root Cause:**
+- `localhost:5173` uses the **Dev Server** (Live code).
+- `chat.progenicslabs.com` uses the **Backend Server** (Port 3001), which serves the **Production Build** (`frontend/dist`).
+- The `dist` folder was outdated and didn't contain the new logo or code changes.
+**Fix:**
+- **Manual Build:** Ran `npm run build` to update the production assets immediately.
+- **Startup Script:** Updated `start-all.sh` to automatically run `npm run build` every time services are started, ensuring production is always in sync with code.
+- **Code:** Updated `LoginPage.jsx` to use the new `askEVO_logo.png` provided by the user.
 
 ## 2. Speech Recognition Error (ERR_BLOCKED_BY_CLIENT)
 **Issue:** The user reported `net::ERR_BLOCKED_BY_CLIENT` and speech failures. This indicates a browser extension (AdBlocker) or privacy setting (Brave Shields) is blocking:
@@ -32,10 +39,8 @@
 - **Layout:** Fixed `Dashboard.jsx` flex layout by removing `w-full` and adding `min-w-0` to the main content area. This ensures the chat area shrinks correctly when the sidebar is open on desktop, preventing buttons/text from being cut off.
 
 ## Verification
-1. **Logo:** Refresh login page to see the logo.
+1. **Logo:** Refresh `chat.progenicslabs.com`. You should see the new logo image. (Clear cache if needed).
 2. **Speech:** If speech fails, check the toast message.
 3. **NFC:** Tap card -> Enter OTP -> Verify -> Redirect to Chat.
 4. **Voice Mode:** Speak a query.
-5. **Sidebar:**
-   - **Desktop (>1024px):** Open sidebar -> Content shrinks to fit (nothing cut off). Close sidebar -> Content expands.
-   - **Tablet/Mobile (<1024px):** Open sidebar -> Sidebar overlays content.
+5. **Sidebar:** Resize window to test responsive behavior.

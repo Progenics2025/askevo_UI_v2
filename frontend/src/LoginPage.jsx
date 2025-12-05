@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Eye, EyeOff, Dna, Mail } from 'lucide-react';
 import { apiService } from './lib/apiService';
-import logo from './assets/askevo-logo.png';
+import logo from './assets/askEVO_logo.png';
+
 
 // Interactive DNA Strand Component
 function InteractiveDnaStrand({ baseX, baseY, dnaIndex, mouseX, mouseY }) {

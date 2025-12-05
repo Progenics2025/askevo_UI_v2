@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
 import SettingsDialog from './SettingsDialog';
+import logo from './assets/askevo-logo.png';
 
 export default function Sidebar({
   activeSection,
@@ -57,7 +58,7 @@ export default function Sidebar({
                 <Dna className="h-6 w-6 text-white" />
               </div>
               <div>
-                <img src="/askevo-logo.png" alt="askEVO" className="h-8" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
+                <img src={logo} alt="askEVO" className="h-8" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
                 <p className="text-xs text-slate-500 font-semibold">by Progenics</p>
               </div>
             </div>

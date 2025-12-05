@@ -84,6 +84,27 @@ start_ollama() {
         fi
     fi
     echo ""
+    fi
+    echo ""
+}
+
+# Function to build frontend
+build_frontend() {
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}[Pre-flight] Building Frontend for Production${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    
+    echo -e "${YELLOW}⚡ Building frontend...${NC}"
+    cd "$FRONTEND_DIR"
+    npm run build
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Frontend built successfully${NC}"
+    else
+        echo -e "${RED}✗ Frontend build failed${NC}"
+        exit 1
+    fi
+    echo ""
 }
 
 # Function to start backend
@@ -187,6 +208,7 @@ echo ""
 
 # Start all services
 start_ollama
+build_frontend
 start_backend
 start_frontend
 start_cloudflared

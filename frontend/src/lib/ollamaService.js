@@ -124,26 +124,45 @@ When users thank you or show appreciation, acknowledge with warmth: "You're welc
             // Core genomics terms
             'gene', 'genetic', 'genome', 'dna', 'rna', 'mutation', 'variant',
             'chromosome', 'allele', 'genotype', 'phenotype', 'sequencing',
-            'ngs', 'pcr', 'crispr', 'snp', 'indel', 'cnv',
+            'ngs', 'pcr', 'crispr', 'snp', 'indel', 'cnv', 'nucleotide', 'base pair',
+            'homozygous', 'heterozygous', 'carrier', 'autosomal', 'x-linked', 'y-linked',
+            'dominant', 'recessive', 'penetrance', 'expressivity', 'mosaicism',
 
-            // Medical/clinical terms
-            'disease', 'disorder', 'syndrome', 'cancer', 'tumor', 'inheritance',
-            'diagnosis', 'clinical', 'patient', 'treatment', 'therapy',
-            'pharmacogenomics', 'drug', 'medicine', 'health',
+            // Cell Biology & Structure
+            'cell', 'nucleus', 'mitochondria', 'ribosome', 'organelle', 'membrane',
+            'cytoplasm', 'cytoskeleton', 'chromatin', 'histone', 'nucleosome',
+            'centromere', 'telomere', 'mitosis', 'meiosis', 'cycle', 'apoptosis',
+            'stem cell', 'differentiation', 'tissue', 'organ', 'system',
 
-            // Molecular biology
-            'protein', 'amino acid', 'transcription', 'translation', 'expression',
-            'epigenetic', 'methylation', 'pathway', 'cell', 'molecular',
+            // Molecular Biology & Biochemistry
+            'protein', 'amino acid', 'enzyme', 'substrate', 'catalyst', 'metabolism',
+            'metabolic', 'pathway', 'signal', 'receptor', 'ligand', 'transcription',
+            'translation', 'replication', 'expression', 'regulation', 'promoter',
+            'enhancer', 'intron', 'exon', 'splicing', 'epigenetic', 'methylation',
+            'acetylation', 'phosphorylation', 'kinase', 'lipid', 'carbohydrate',
 
-            // Technical terms
-            'bioinformatics', 'annotation', 'pipeline', 'analysis', 'vcf',
-            'bam', 'fastq', 'alignment', 'assembly', 'blast',
+            // Medical/Clinical terms
+            'disease', 'disorder', 'syndrome', 'condition', 'pathology', 'symptom',
+            'diagnosis', 'prognosis', 'treatment', 'therapy', 'drug', 'medicine',
+            'clinical', 'patient', 'doctor', 'physician', 'counseling', 'risk',
+            'screening', 'test', 'assay', 'biomarker', 'cancer', 'tumor', 'oncology',
+            'hereditary', 'inherited', 'congenital', 'pharmacogenomics', 'precision medicine',
 
-            // Databases and standards
-            'clinvar', 'omim', 'gnomad', 'acmg', 'hgvs', 'ensembl',
+            // Anatomy & Physiology
+            'anatomy', 'physiology', 'body', 'blood', 'immune', 'nervous', 'endocrine',
+            'hormone', 'brain', 'heart', 'liver', 'kidney', 'lung', 'muscle', 'bone',
+            'reproduction', 'development', 'growth', 'aging', 'health',
 
-            // Life sciences
-            'biology', 'biotechnology', 'research', 'laboratory', 'assay'
+            // Bioinformatics & Data
+            'bioinformatics', 'computational', 'data', 'analysis', 'pipeline', 'algorithm',
+            'database', 'alignment', 'assembly', 'variant calling', 'annotation',
+            'vcf', 'bam', 'fastq', 'reference', 'quality', 'statistics', 'probability',
+
+            // General Science & Biology
+            'biology', 'biological', 'science', 'scientific', 'research', 'study',
+            'experiment', 'hypothesis', 'theory', 'evidence', 'literature', 'paper',
+            'journal', 'publication', 'organism', 'species', 'evolution', 'population',
+            'ecology', 'environment', 'biotechnology', 'laboratory', 'technique', 'method'
         ];
 
         const messageLower = message.toLowerCase();

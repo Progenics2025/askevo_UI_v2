@@ -58,6 +58,7 @@
 - **Out-of-Domain Handling:** Returns a polite, static response for irrelevant queries.
 - **Improved Streaming:** Better error handling and buffer management for JSON chunks.
 - **Diagnostics:** Enhanced connection checking and model listing.
+- **Expanded Keywords:** Massively expanded the validation keyword list to include cell biology, molecular biology, anatomy, and general science terms (e.g., "chromatin", "histone", "organelle") to prevent false negatives.
 
 ## 8. Welcome Message UI
 **Update:** Updated `GenomicsChat.jsx` to include a styled Welcome Message.
@@ -75,5 +76,7 @@
 6. **NFC:** Tap card -> Enter OTP -> Verify -> Redirect to Chat.
 7. **Voice Mode:** Speak a query.
 8. **Genomics Chat:** Ask a genomics question (e.g., "What is BRCA1?"). It should answer with the new persona "askEVO Genetic Assistant".
-9. **Domain Check:** Ask a non-genomics question (e.g., "How to bake a cake?"). It should politely decline.
+9. **Domain Check:**
+    - Ask "what is the purpose of chromatin?" -> Should be ACCEPTED.
+    - Ask "how to bake a cake?" -> Should be REJECTED.
 10. **Welcome UI:** Click "New Chat". You should see the large Welcome UI with the disclaimer. Send a message. The Welcome UI should disappear.

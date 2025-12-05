@@ -432,7 +432,7 @@ export default function GenomicsChat({ chatId, chatName, onToggleSidebar, isSide
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-violet-50/30" data-testid="genomics-chat-container">
+    <div className="flex flex-col h-[100dvh] bg-gradient-to-br from-slate-50 via-cyan-50/30 to-violet-50/30" data-testid="genomics-chat-container">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-md border-b border-cyan-100 px-3 py-2 md:px-6 md:py-3 shadow-sm">
         <div className="flex items-center justify-between">

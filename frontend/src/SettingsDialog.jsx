@@ -59,7 +59,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]" data-testid="settings-dialog">
+            <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto" data-testid="settings-dialog">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl font-bold" style={{ fontFamily: 'Bricolage Grotesque' }}>
                         <Settings className="h-6 w-6 text-cyan-600" />

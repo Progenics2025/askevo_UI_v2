@@ -72,7 +72,14 @@
 **Fix:**
 - Removed Ollama URL and Genomics API URL inputs from `SettingsDialog.jsx`.
 - This prevents users from accidentally or intentionally changing the backend connections.
-- The application now relies solely on the default values or existing localStorage values (if any).
+
+## 10. Mobile UI Fixes
+**Issue:**
+- Chat input area was not visible on mobile devices (hidden below viewport).
+- Settings dialog was too tall for mobile screens, making "Save" button inaccessible.
+**Fix:**
+- **GenomicsChat.jsx:** Changed main container height from `h-full` to `h-[100dvh]` (Dynamic Viewport Height) to account for mobile browser toolbars.
+- **SettingsDialog.jsx:** Added `max-h-[85vh]` and `overflow-y-auto` to the dialog content to make it scrollable on small screens.
 
 ## Verification
 1. **Logo:** Refresh `chat.progenicslabs.com`. Logo should be very large (`h-20`).
@@ -87,4 +94,7 @@
     - Ask "what is the purpose of chromatin?" -> Should be ACCEPTED.
     - Ask "how to bake a cake?" -> Should be REJECTED.
 10. **Welcome UI:** Click "New Chat". You should see the large Welcome UI with the disclaimer. Send a message. The Welcome UI should disappear.
-11. **Settings:** Open Settings. You should NOT see "API Configuration", "Ollama URL", or "Genomics API URL".
+11. **Settings:** Open Settings. You should NOT see "API Configuration".
+12. **Mobile:**
+    - Open on mobile. Verify Chat Input is visible at the bottom.
+    - Open Settings on mobile. Verify you can scroll to see the "Save" button.

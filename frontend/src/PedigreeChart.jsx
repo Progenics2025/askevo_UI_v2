@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, User, Trash2, GitBranch, MessageSquare, Send, ChevronDown, ChevronUp, Save, BookOpen, X, FolderOpen, Clock, PanelLeft } from 'lucide-react';
+import { Plus, User, Trash2, GitBranch, MessageSquare, Send, ChevronDown, ChevronUp, Save, BookOpen, X, FolderOpen, Clock, PanelLeft, MoreVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import PedigreeVisualization from '@/components/PedigreeVisualization';
 import { apiService } from '@/lib/apiService';
@@ -396,68 +397,109 @@ export default function PedigreeChart({ onToggleSidebar, isSidebarOpen }) {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/30 relative overflow-hidden" data-testid="pedigree-chart-container">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-emerald-100 px-6 py-4 shadow-sm">
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-md border-b border-emerald-100 px-4 py-3 md:px-6 md:py-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {!isSidebarOpen && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onToggleSidebar}
-                className="mr-2 text-slate-500 hover:text-emerald-600"
+                className="mr-1 md:mr-2 text-slate-500 hover:text-emerald-600"
               >
-                <PanelLeft className="h-6 w-6" />
+                <PanelLeft className="h-5 w-5 md:h-6 md:w-6" />
               </Button>
             )}
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl shadow-lg">
-              <GitBranch className="h-6 w-6 text-white" />
+            <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl shadow-lg">
+              <GitBranch className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900" style={{ fontFamily: 'Bricolage Grotesque' }}>
+              <h2 className="text-base md:text-lg font-bold text-slate-900 leading-tight" style={{ fontFamily: 'Bricolage Grotesque' }}>
                 Pedigree Chart
               </h2>
-              <p className="text-sm text-slate-500 font-medium">Family genetic inheritance visualization</p>
+              <p className="text-xs md:text-sm text-slate-500 font-medium hidden sm:block">Family genetic inheritance visualization</p>
             </div>
           </div>
-          <div className="flex gap-3">
+
+          {/* Desktop Actions */}
+          <div className="hidden lg:flex gap-2 xl:gap-3">
             <Button
               onClick={() => setShowGuide(!showGuide)}
               variant="outline"
               className="font-bold shadow-sm"
+              size="sm"
             >
-              <BookOpen className="mr-2 h-5 w-5" />
+              <BookOpen className="mr-2 h-4 w-4" />
               Guide
             </Button>
             <Button
               onClick={() => setSaveDialogOpen(true)}
               className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-bold shadow-lg transition-all hover:scale-105"
+              size="sm"
             >
-              <Save className="mr-2 h-5 w-5" />
+              <Save className="mr-2 h-4 w-4" />
               Save
             </Button>
             <Button
               onClick={handleOpenLoadDialog}
               className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold shadow-lg transition-all hover:scale-105"
+              size="sm"
             >
-              <FolderOpen className="mr-2 h-5 w-5" />
+              <FolderOpen className="mr-2 h-4 w-4" />
               Load
             </Button>
             <Button
               onClick={startInterview}
               className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold shadow-lg transition-all hover:scale-105"
               data-testid="interview-button"
+              size="sm"
             >
-              <MessageSquare className="mr-2 h-5 w-5" />
+              <MessageSquare className="mr-2 h-4 w-4" />
               Interview
             </Button>
             <Button
               onClick={handleAddMember}
               className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg transition-all hover:scale-105"
               data-testid="add-member-button"
+              size="sm"
             >
-              <Plus className="mr-2 h-5 w-5" />
+              <Plus className="mr-2 h-4 w-4" />
               Add Member
             </Button>
+          </div>
+
+          {/* Mobile/Tablet Actions Dropdown */}
+          <div className="lg:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9 border-emerald-200">
+                  <MoreVertical className="h-5 w-5 text-emerald-700" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleAddMember} className="font-semibold text-emerald-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Member
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={startInterview} className="font-semibold text-violet-700">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Interview
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSaveDialogOpen(true)} className="font-semibold text-blue-700">
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Chart
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleOpenLoadDialog} className="font-semibold text-amber-700">
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  Load Chart
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowGuide(!showGuide)}>
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  User Guide
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

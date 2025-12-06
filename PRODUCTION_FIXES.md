@@ -104,3 +104,10 @@
 **Fix:**
 - **Dashboard.jsx:** Passed `onToggleSidebar` and `isSidebarOpen` props to `PedigreeChart`.
 - **PedigreeChart.jsx:** Added a sidebar toggle button (hamburger menu) to the header, visible when the sidebar is closed. This allows users to reopen the sidebar and navigate back to the Genomics Assistant.
+
+## 13. Pedigree Chart Responsive Header
+**Issue:** Action buttons (Add Member, Interview, Save, etc.) in the Pedigree Chart header were not visible or were cluttered on mobile and tablet devices.
+**Fix:**
+- **Responsive Layout:** Implemented a responsive header design in `PedigreeChart.jsx`.
+- **Desktop:** Full action buttons are visible on large screens (`lg` breakpoint and up).
+- **Mobile/Tablet:** Action buttons are collapsed into a dropdown menu triggered by a "More" (three vertical dots) icon. This ensures all actions are accessible without cluttering the interface on smaller screens.

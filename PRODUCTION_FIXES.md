@@ -98,3 +98,9 @@
 12. **Mobile:**
     - Open on mobile. Verify Chat Input is visible at the bottom.
     - Open Settings on mobile. Verify you can scroll to see the "Save" button.
+
+## 12. Pedigree Chart Navigation
+**Issue:** User was unable to go back to the chat section from the Pedigree Chart, especially when the sidebar was closed (e.g., on mobile).
+**Fix:**
+- **Dashboard.jsx:** Passed `onToggleSidebar` and `isSidebarOpen` props to `PedigreeChart`.
+- **PedigreeChart.jsx:** Added a sidebar toggle button (hamburger menu) to the header, visible when the sidebar is closed. This allows users to reopen the sidebar and navigate back to the Genomics Assistant.

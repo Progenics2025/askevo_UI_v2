@@ -173,7 +173,10 @@ export default function Dashboard({ user, onLogout }) {
             isSidebarOpen={isSidebarOpen}
           />
         ) : (
-          <PedigreeChart />
+          <PedigreeChart
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            isSidebarOpen={isSidebarOpen}
+          />
         )}
       </div>
     </div>

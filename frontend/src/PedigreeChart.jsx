@@ -8,12 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, User, Trash2, GitBranch, MessageSquare, Send, ChevronDown, ChevronUp, Save, BookOpen, X, FolderOpen, Clock } from 'lucide-react';
+import { Plus, User, Trash2, GitBranch, MessageSquare, Send, ChevronDown, ChevronUp, Save, BookOpen, X, FolderOpen, Clock, PanelLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import PedigreeVisualization from '@/components/PedigreeVisualization';
 import { apiService } from '@/lib/apiService';
 
-export default function PedigreeChart() {
+export default function PedigreeChart({ onToggleSidebar, isSidebarOpen }) {
   const [members, setMembers] = useState([
     {
       id: '1',
@@ -399,6 +399,16 @@ export default function PedigreeChart() {
       <div className="bg-white/80 backdrop-blur-md border-b border-emerald-100 px-6 py-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {!isSidebarOpen && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onToggleSidebar}
+                className="mr-2 text-slate-500 hover:text-emerald-600"
+              >
+                <PanelLeft className="h-6 w-6" />
+              </Button>
+            )}
             <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl shadow-lg">
               <GitBranch className="h-6 w-6 text-white" />
             </div>

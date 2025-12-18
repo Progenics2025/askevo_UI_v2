@@ -118,8 +118,26 @@ When users thank you or show appreciation, acknowledge with warmth: "You're welc
 
     /**
      * Validate if question is within allowed domains
+     * Now more permissive to allow natural conversation flow
      */
     isValidGenomicsDomain(message) {
+        const messageLower = message.toLowerCase().trim();
+
+        // Always allow greetings and short conversational messages
+        const greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon',
+            'good evening', 'thanks', 'thank you', 'help', 'what can you do',
+            'who are you', 'introduce yourself', 'capabilities'];
+        if (greetings.some(g => messageLower.includes(g)) || messageLower.length < 15) {
+            return true;
+        }
+
+        // Always allow questions starting with common question words
+        const questionStarters = ['what', 'how', 'why', 'when', 'where', 'which', 'can you',
+            'could you', 'tell me', 'explain', 'describe', 'define'];
+        if (questionStarters.some(q => messageLower.startsWith(q))) {
+            return true;
+        }
+
         const genomicsKeywords = [
             // Core genomics terms
             'gene', 'genetic', 'genome', 'dna', 'rna', 'mutation', 'variant',
@@ -127,6 +145,7 @@ When users thank you or show appreciation, acknowledge with warmth: "You're welc
             'ngs', 'pcr', 'crispr', 'snp', 'indel', 'cnv', 'nucleotide', 'base pair',
             'homozygous', 'heterozygous', 'carrier', 'autosomal', 'x-linked', 'y-linked',
             'dominant', 'recessive', 'penetrance', 'expressivity', 'mosaicism',
+            'brca', 'tp53', 'egfr', 'kras', 'apc', 'msh', 'mlh', // Common genes
 
             // Cell Biology & Structure
             'cell', 'nucleus', 'mitochondria', 'ribosome', 'organelle', 'membrane',
@@ -147,11 +166,12 @@ When users thank you or show appreciation, acknowledge with warmth: "You're welc
             'clinical', 'patient', 'doctor', 'physician', 'counseling', 'risk',
             'screening', 'test', 'assay', 'biomarker', 'cancer', 'tumor', 'oncology',
             'hereditary', 'inherited', 'congenital', 'pharmacogenomics', 'precision medicine',
+            'health', 'medical', 'hospital', 'lab', 'laboratory', 'report',
 
             // Anatomy & Physiology
             'anatomy', 'physiology', 'body', 'blood', 'immune', 'nervous', 'endocrine',
             'hormone', 'brain', 'heart', 'liver', 'kidney', 'lung', 'muscle', 'bone',
-            'reproduction', 'development', 'growth', 'aging', 'health',
+            'reproduction', 'development', 'growth', 'aging',
 
             // Bioinformatics & Data
             'bioinformatics', 'computational', 'data', 'analysis', 'pipeline', 'algorithm',
@@ -162,10 +182,11 @@ When users thank you or show appreciation, acknowledge with warmth: "You're welc
             'biology', 'biological', 'science', 'scientific', 'research', 'study',
             'experiment', 'hypothesis', 'theory', 'evidence', 'literature', 'paper',
             'journal', 'publication', 'organism', 'species', 'evolution', 'population',
-            'ecology', 'environment', 'biotechnology', 'laboratory', 'technique', 'method'
-        ];
+            'ecology', 'environment', 'biotechnology', 'technique', 'method',
 
-        const messageLower = message.toLowerCase();
+            // Progenics and platform specific
+            'progenics', 'askevo', 'genomics', 'genetics'
+        ];
 
         // Check if message contains any genomics-related keywords
         return genomicsKeywords.some(keyword => messageLower.includes(keyword));
@@ -221,8 +242,20 @@ Your question seems to be outside my area of expertise. For the best assistance,
         // Check if question is within genomics domain
         const isGenomicsDomain = this.isValidGenomicsDomain(lastUserMessage);
 
-        // If out of domain, return pre-defined response
-        if (!isGenomicsDomain && lastUserMessage.length > 10) {
+        // Also check if any previous messages in the conversation are genomics-related
+        // This allows follow-up questions without needing keywords
+        const hasGenomicsContext = messages.some(msg =>
+            this.isValidGenomicsDomain(msg.content || '')
+        );
+
+        // Only block if:
+        // 1. Current message is NOT genomics related
+        // 2. No previous genomics context exists
+        // 3. Message is long enough to be a real question (> 30 chars)
+        // 4. Message doesn't look like a follow-up question
+        const isFollowUp = /^(and|but|also|what about|how about|can you|please|more|elaborate|explain|tell me more)/i.test(lastUserMessage.trim());
+
+        if (!isGenomicsDomain && !hasGenomicsContext && lastUserMessage.length > 30 && !isFollowUp) {
             // Return a stream-like response for consistency
             return this.createStaticResponseStream(this.getOutOfDomainResponse());
         }

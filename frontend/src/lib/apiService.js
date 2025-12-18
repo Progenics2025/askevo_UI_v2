@@ -184,12 +184,25 @@ class ApiService {
             body: JSON.stringify({ email, type })
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to send OTP');
+        // Get response text first to handle empty responses
+        const responseText = await response.text();
+
+        // Try to parse JSON, or use empty object if empty/invalid
+        let data = {};
+        if (responseText) {
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('Failed to parse response:', responseText);
+                throw new Error('Server returned an invalid response');
+            }
         }
 
-        return response.json();
+        if (!response.ok) {
+            throw new Error(data.message || `Failed to send OTP (Status: ${response.status})`);
+        }
+
+        return data;
     }
 
     async verifyOtp(email, otp) {
@@ -199,12 +212,25 @@ class ApiService {
             body: JSON.stringify({ email, otp })
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'OTP verification failed');
+        // Get response text first to handle empty responses
+        const responseText = await response.text();
+
+        // Try to parse JSON, or use empty object if empty/invalid
+        let data = {};
+        if (responseText) {
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('Failed to parse response:', responseText);
+                throw new Error('Server returned an invalid response');
+            }
         }
 
-        return response.json();
+        if (!response.ok) {
+            throw new Error(data.message || `OTP verification failed (Status: ${response.status})`);
+        }
+
+        return data;
     }
 
     // Pedigree

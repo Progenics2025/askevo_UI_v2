@@ -5,14 +5,46 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const nodemailer = require('nodemailer');
 
-// Configure Nodemailer
+// Configure Nodemailer with robust settings
+const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
+const isSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
+
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE === 'true',
+    port: smtpPort,
+    secure: isSecure, // true for 465, false for other ports
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
+    },
+    // Connection pool settings
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    // Socket timeout settings
+    connectionTimeout: 30000, // 30 seconds
+    greetingTimeout: 30000,
+    socketTimeout: 60000, // 60 seconds for sending
+    // TLS options for better compatibility
+    tls: {
+        rejectUnauthorized: false, // Allow self-signed certs if needed
+        minVersion: 'TLSv1.2'
+    },
+    // Debug logging (enable for troubleshooting)
+    debug: process.env.NODE_ENV === 'development',
+    logger: process.env.NODE_ENV === 'development'
+});
+
+// Verify SMTP connection on startup
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('SMTP Connection Error:', error.message);
+        console.error('Please check your SMTP settings:');
+        console.error('  - SMTP_HOST:', process.env.SMTP_HOST || '(not set)');
+        console.error('  - SMTP_PORT:', smtpPort, '(secure:', isSecure, ')');
+        console.error('  - SMTP_USER:', process.env.SMTP_USER ? '(set)' : '(not set)');
+    } else {
+        console.log('✓ SMTP Server is ready to send emails');
     }
 });
 
